@@ -1,0 +1,118 @@
+.inventory-page {
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.inventory-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inventory-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-primary);
+}
+
+.inventory-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.search-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    width: 250px;
+}
+
+.add-btn {
+    padding: 8px 16px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.add-btn:hover {
+    background: var(--color-secondary);
+    color: var(--color-primary);
+}
+
+.inventory-table-container {
+    flex: 1;
+    overflow: auto;
+}
+
+.inventory-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventory-table th,
+.inventory-table td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.inventory-table th {
+    background: #fafafa;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.cell-name {
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-green {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-amber {
+    background: #fff8e1;
+    color: #ffa000;
+}
+
+.status-red {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.icon-action {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.icon-action:hover {
+    background: #f5f5f5;
+    border-radius: 4px;
+}
