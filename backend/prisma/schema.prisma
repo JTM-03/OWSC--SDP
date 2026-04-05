@@ -1,0 +1,607 @@
+// Restaurant Management System - V2.0 Optimized Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// 1. MEMBER & MEMBERSHIP MODULE
+// ========================================
+
+model Member {
+  id                     Int       @id @default(autoincrement()) @map("MemberID")
+  fullName               String    @map("FullName")
+  nic                    String    @unique @map("NIC")
+  address                String    @map("Address")
+  phone                  String    @map("Phone")
+  email                  String    @unique @map("Email")
+  username               String    @unique @map("Username")
+  passwordHash           String    @map("PasswordHash")
+  notificationPreference String    @default("Email") @map("NotificationPreference") // Enum: Email, SMS, Both, None
+  status                 String    @default("Pending") @map("Status") // Enum: Active, Inactive, Suspended, Pending
+  registrationDate       DateTime  @default(now()) @map("RegistrationDate")
+  // Extra field for system compatibility
+  role                   String    @default("member") @map("Role") 
+  emergencyContact       String?   @map("EmergencyContact")
+  emergencyPhone         String?   @map("EmergencyPhone")
+  loyaltyPoints          Int       @default(0) @map("LoyaltyPoints")
+  paymentSlipUrl         String?   @map("PaymentSlipUrl")
+
+  // Relationships
+  memberships          User[]
+  membershipPayments   MembershipPayment[]
+  venueBookings        VenueBooking[]
+  bookingPayments      BookingPayment[]
+  reservations         TableReservation[]
+  cart                 Cart?
+  orders               Order[]
+  orderPayments        OrderPayment[]
+  userNotifications    UserNotification[]
+  stockMovements       StockMovement[]
+  auditLogs            AuditLog[]
+  
+  // Legacy/Extra Relationships (kept for safety)
+  shifts               Shift[]
+  venueAssignments     VenueAssignment[]
+  membershipRequests   MembershipUpgradeRequest[]
+
+  @@map("Member")
+}
+
+model User {
+  id            Int      @id @default(autoincrement()) @map("user_ID")
+  memberId      Int      @map("MemberID")
+  membershipType String  @map("MembershipType") // Enum: Full, Associate, Sport, Social, Lifetime
+  startDate     DateTime @map("StartDate") // stored as Date
+  endDate       DateTime? @map("EndDate") // stored as Date, NULL for Lifetime
+  status        String   @default("Pending") @map("Status") // Enum: Active, Expired, Cancelled, Pending
+  membershipFee Decimal @db.Decimal(10, 2)@map("MembershipFee")
+
+  // Relationships
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  payments      MembershipPayment[]
+
+  @@map("User")
+}
+
+model MembershipPayment {
+  id            Int      @id @default(autoincrement()) @map("PaymentID")
+  membershipId  Int      @map("MembershipID")
+  memberId      Int      @map("MemberID")
+  amount        Decimal @db.Decimal(10, 2)@map("Amount")
+  paymentMethod String   @map("PaymentMethod") // Enum: Card, Bank Transfer, Cash, eZCash, FriMi
+  transactionId String?  @unique @map("TransactionID")
+  paymentDate   DateTime @default(now()) @map("PaymentDate")
+  paymentStatus String   @default("Pending") @map("PaymentStatus")
+
+  // Relationships
+  membership    User @relation(fields: [membershipId], references: [id])
+  member        Member     @relation(fields: [memberId], references: [id])
+
+  @@map("MembershipPayment")
+}
+
+// ========================================
+// 2. VENUE MANAGEMENT MODULE
+// ========================================
+
+model Venue {
+  id          Int      @id @default(autoincrement()) @map("VenueID")
+  name        String   @map("Name")
+  capacity    Int      @map("Capacity")
+  facilities  String?  @map("Facilities")
+  atmosphere  String?  @map("Atmosphere")
+  charge      Decimal @db.Decimal(10, 2)@map("Charge")
+  isAvailable Boolean  @default(true) @map("IsAvailable")
+  imageUrl    String?  @map("ImageURL")
+
+  // Relationships
+  bookings    VenueBooking[]
+  // Legacy
+  assignments VenueAssignment[]
+
+  @@map("Venue")
+}
+
+model VenueBooking {
+  id            Int      @id @default(autoincrement()) @map("BookingID")
+  memberId      Int      @map("MemberID")
+  venueId       Int      @map("VenueID")
+  bookingDate   DateTime @map("BookingDate") // Date
+  timeSlot      String   @map("TimeSlot")
+  bookingStatus String   @default("Pending") @map("BookingStatus")
+  purpose       String?  @map("Purpose")
+  createdDate   DateTime @default(now()) @map("CreatedDate")
+
+  // Relationships
+  member        Member          @relation(fields: [memberId], references: [id])
+  venue         Venue           @relation(fields: [venueId], references: [id])
+  payments      BookingPayment[]
+  feedback      VenueFeedback?
+
+  @@unique([venueId, bookingDate, timeSlot])
+  @@map("VenueBooking")
+}
+
+model BookingPayment {
+  id            Int      @id @default(autoincrement()) @map("PaymentID")
+  bookingId     Int      @map("BookingID")
+  memberId      Int      @map("MemberID")
+  amount        Decimal @db.Decimal(10, 2)@map("Amount")
+  paymentMethod String   @map("PaymentMethod")
+  transactionId String?  @unique @map("TransactionID")
+  paymentDate   DateTime @default(now()) @map("PaymentDate")
+  paymentStatus String   @default("Pending") @map("PaymentStatus")
+
+  // Relationships
+  booking       VenueBooking @relation(fields: [bookingId], references: [id])
+  member        Member       @relation(fields: [memberId], references: [id])
+
+  @@map("BookingPayment")
+}
+
+model VenueFeedback {
+  id           Int      @id @default(autoincrement()) @map("FeedbackID")
+  bookingId    Int      @unique @map("BookingID")
+  rating       Int      @map("Rating") // 1-5
+  comment      String?  @map("Comment")
+  feedbackDate DateTime @default(now()) @map("FeedbackDate")
+
+  // Relationships
+  booking      VenueBooking @relation(fields: [bookingId], references: [id])
+
+  @@map("VenueFeedback")
+}
+
+// ========================================
+// 3. RESTAURANT & DINING MODULE
+// ========================================
+
+model RestaurantTable {
+  id          Int      @id @default(autoincrement()) @map("TableID")
+  tableNumber String   @unique @map("TableNumber")
+  capacity    Int      @map("Capacity")
+  location    String?  @map("Location")
+  status      String   @default("Available") @map("Status")
+
+  // Relationships
+  reservations TableReservation[]
+  orders       Order[]
+
+  @@map("RestaurantTable")
+}
+
+model TableReservation {
+  id              Int      @id @default(autoincrement()) @map("ReservationID")
+  memberId        Int      @map("MemberID")
+  tableId         Int      @map("TableID")
+  reservationDate DateTime @map("ReservationDate") // Date
+  reservationTime String   @map("ReservationTime") // Time
+  partySize       Int      @map("PartySize")
+  status          String   @default("Pending") @map("ReservationStatus")
+  specialRequests String?  @map("SpecialRequests")
+  createdDate     DateTime @default(now()) @map("CreatedDate")
+
+  // Relationships
+  member          Member          @relation(fields: [memberId], references: [id])
+  table           RestaurantTable @relation(fields: [tableId], references: [id])
+
+  @@unique([tableId, reservationDate, reservationTime])
+  @@map("TableReservation")
+}
+
+// ========================================
+// 4. FOOD ORDERING MODULE
+// ========================================
+
+model MenuItem {
+  id                 Int      @id @default(autoincrement()) @map("MenuItemID")
+  name               String   @map("Name")
+  category           String   @map("Category")
+  description        String?  @map("Description")
+  price              Decimal @db.Decimal(10, 2)@map("Price")
+  imageUrl           String?  @map("ImageURL")
+  availabilityStatus String   @default("Available") @map("AvailabilityStatus")
+  isPopular          Boolean  @default(false) @map("IsPopular")
+  isVegetarian       Boolean  @default(false) @map("IsVegetarian")
+  isSpicy            Boolean  @default(false) @map("IsSpicy")
+  prepTime           Int?     @map("PrepTime")
+
+  // Relationships
+  cartItems          CartItem[]
+  orderItems         OrderItem[]
+
+  @@map("MenuItem")
+}
+
+model Modifier {
+  id              Int      @id @default(autoincrement()) @map("ModifierID")
+  name            String   @map("Name")
+  additionalPrice Decimal @db.Decimal(10, 2) @default(0.00)@map("AdditionalPrice")
+  category        String?  @map("Category")
+  isAvailable     Boolean  @default(true) @map("IsAvailable")
+
+  // Relationships
+  cartItemModifiers  CartItemModifier[]
+  orderItemModifiers OrderItemModifier[]
+
+  @@map("Modifier")
+}
+
+model Cart {
+  id          Int      @id @default(autoincrement()) @map("CartID")
+  memberId    Int      @unique @map("MemberID")
+  createdDate DateTime @default(now()) @map("CreatedDate")
+  updatedDate DateTime @updatedAt @map("UpdatedDate")
+  status      String   @default("Active") @map("Status")
+
+  // Relationships
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  cartItems   CartItem[]
+
+  @@map("Cart")
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement()) @map("CartItemID")
+  cartId     Int      @map("CartID")
+  menuItemId Int      @map("MenuItemID")
+  quantity   Int      @map("Quantity")
+  unitPrice  Decimal @db.Decimal(10, 2)@map("UnitPrice")
+  notes      String?  @map("Notes")
+  addedDate  DateTime @default(now()) @map("AddedDate")
+
+  // Relationships
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  modifiers  CartItemModifier[]
+
+  @@map("CartItem")
+}
+
+model CartItemModifier {
+  id          Int      @id @default(autoincrement()) @map("CartItemModifierID")
+  cartItemId  Int      @map("CartItemID")
+  modifierId  Int      @map("ModifierID")
+
+  // Relationships
+  cartItem    CartItem @relation(fields: [cartItemId], references: [id], onDelete: Cascade)
+  modifier    Modifier @relation(fields: [modifierId], references: [id])
+
+  @@unique([cartItemId, modifierId])
+  @@map("CartItemModifier")
+}
+
+model Order {
+  id                  Int      @id @default(autoincrement()) @map("OrderID")
+  memberId            Int      @map("MemberID")
+  restaurantTableId   Int?     @map("RestaurantTableID")
+  orderType           String   @map("OrderType")
+  orderDate           DateTime @default(now()) @map("OrderDate")
+  orderStatus         String   @default("Pending") @map("OrderStatus")
+  totalAmount         Decimal @db.Decimal(10, 2)@map("TotalAmount")
+  specialInstructions String?  @map("SpecialInstructions")
+
+  // Relationships
+  member              Member           @relation(fields: [memberId], references: [id])
+  restaurantTable     RestaurantTable? @relation(fields: [restaurantTableId], references: [id])
+  orderItems          OrderItem[]
+  payments            OrderPayment[]
+
+  @@map("Order")
+}
+
+model OrderItem {
+  id            Int      @id @default(autoincrement()) @map("OrderItemID")
+  orderId       Int      @map("OrderID")
+  menuItemId    Int      @map("MenuItemID")
+  quantity      Int      @map("Quantity")
+  unitPrice     Decimal @db.Decimal(10, 2)@map("UnitPrice")
+  kitchenStatus String   @default("Pending") @map("KitchenStatus")
+  notes         String?  @map("Notes")
+
+  // Relationships
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
+  modifiers     OrderItemModifier[]
+
+  @@map("OrderItem")
+}
+
+model OrderItemModifier {
+  id          Int       @id @default(autoincrement()) @map("OrderItemModifierID")
+  orderItemId Int       @map("OrderItemID")
+  modifierId  Int       @map("ModifierID")
+
+  // Relationships
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  modifier    Modifier  @relation(fields: [modifierId], references: [id])
+
+  @@map("OrderItemModifier")
+}
+
+model OrderPayment {
+  id            Int      @id @default(autoincrement()) @map("PaymentID")
+  orderId       Int      @map("OrderID")
+  memberId      Int      @map("MemberID")
+  amount        Decimal @db.Decimal(10, 2)@map("Amount")
+  paymentMethod String   @map("PaymentMethod")
+  transactionId String?  @unique @map("TransactionID")
+  paymentDate   DateTime @default(now()) @map("PaymentDate")
+  paymentStatus String   @default("Pending") @map("PaymentStatus")
+
+  // Relationships
+  order         Order    @relation(fields: [orderId], references: [id])
+  member        Member   @relation(fields: [memberId], references: [id])
+
+  @@map("OrderPayment")
+}
+
+// ========================================
+// 5. INVENTORY MANAGEMENT MODULE
+// ========================================
+
+model Product {
+  id          Int      @id @default(autoincrement()) @map("ProductID")
+  productName String   @map("ProductName")
+  category    String   @map("Category")
+  unit        String   @map("Unit")
+  description String?  @map("Description")
+
+  // Relationships
+  inventory      Inventory?
+  stockBatches   StockBatch[]
+  stockMovements StockMovement[]
+  deliveryItems  DeliveryItem[]
+
+  @@map("Product")
+}
+
+model Inventory {
+  productId       Int      @id @map("ProductID")
+  currentQuantity Decimal @db.Decimal(10, 2) @default(0)@map("CurrentQuantity")
+  reorderLevel    Decimal @db.Decimal(10, 2)@map("ReorderLevel")
+  lastUpdated     DateTime @default(now()) @updatedAt @map("LastUpdated")
+
+  // Relationships
+  product         Product  @relation(fields: [productId], references: [id])
+
+  @@map("Inventory")
+}
+
+model Supplier {
+  id            Int      @id @default(autoincrement()) @map("SupplierID")
+  name          String   @map("Name")
+  contactPerson String?  @map("ContactPerson")
+  phone         String   @map("Phone")
+  email         String?  @map("Email")
+  address       String?  @map("Address")
+  status        String   @default("Active") @map("Status")
+
+  // Relationships
+  stockBatches  StockBatch[]
+  deliveries    Delivery[]
+
+  @@map("Supplier")
+}
+
+model Delivery {
+  id             Int      @id @default(autoincrement()) @map("DeliveryID")
+  supplierId     Int      @map("SupplierID")
+  deliveryDate   DateTime @map("DeliveryDate") // Date
+  receivedDate   DateTime? @map("ReceivedDate")
+  deliveryStatus String   @default("Pending") @map("DeliveryStatus")
+  invoiceNumber  String?  @unique @map("InvoiceNumber")
+
+  // Relationships
+  supplier       Supplier @relation(fields: [supplierId], references: [id])
+  deliveryItems  DeliveryItem[]
+
+  @@map("Delivery")
+}
+
+model DeliveryItem {
+  id         Int      @id @default(autoincrement()) @map("DeliveryItemID")
+  deliveryId Int      @map("DeliveryID")
+  productId  Int      @map("ProductID")
+  quantity   Decimal @db.Decimal(10, 2)@map("Quantity")
+  unitPrice  Decimal @db.Decimal(10, 2)@map("UnitPrice")
+
+  // Relationships
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+
+  @@map("DeliveryItem")
+}
+
+model StockBatch {
+  id          Int       @id @default(autoincrement()) @map("BatchID")
+  productId   Int       @map("ProductID")
+  supplierId  Int       @map("SupplierID")
+  quantity    Decimal @db.Decimal(10, 2)@map("Quantity")
+  supplyDate  DateTime  @map("SupplyDate") // Date
+  expiryDate  DateTime? @map("ExpiryDate") // Date
+  batchNumber String?   @unique @map("BatchNumber")
+
+  // Relationships
+  product     Product   @relation(fields: [productId], references: [id])
+  supplier    Supplier  @relation(fields: [supplierId], references: [id])
+  returns     Return[]
+
+  @@map("StockBatch")
+}
+
+model Return {
+  id         Int        @id @default(autoincrement()) @map("ReturnID")
+  batchId    Int        @map("BatchID")
+  reason     String     @map("Reason")
+  returnDate DateTime   @map("ReturnDate") // Date
+  quantity   Decimal @db.Decimal(10, 2)@map("Quantity")
+  status     String     @default("Pending") @map("Status")
+
+  // Relationships
+  batch      StockBatch @relation(fields: [batchId], references: [id])
+
+  @@map("Return")
+}
+
+model StockMovement {
+  id            Int      @id @default(autoincrement()) @map("MovementID")
+  productId     Int      @map("ProductID")
+  movementType  String   @map("MovementType") // IN, OUT, ADJUSTMENT
+  quantity      Decimal @db.Decimal(10, 2)@map("Quantity")
+  referenceType String   @map("ReferenceType")
+  referenceId   Int?     @map("ReferenceID")
+  movementDate  DateTime @default(now()) @map("MovementDate")
+  reason        String?  @map("Reason")
+  performedBy   Int?     @map("PerformedBy")
+
+  // Relationships
+  product       Product  @relation(fields: [productId], references: [id])
+  member        Member?  @relation(fields: [performedBy], references: [id])
+
+  @@map("StockMovement")
+}
+
+// ========================================
+// 6. NOTIFICATION MODULE
+// ========================================
+
+model Notification {
+  id               Int                @id @default(autoincrement()) @map("NotificationID")
+  title            String             @map("Title")
+  message          String             @map("Message")
+  createdDate      DateTime           @default(now()) @map("CreatedDate")
+  notificationType String             @map("NotificationType")
+  priority         String             @default("Medium") @map("Priority")
+
+  // Relationships
+  userNotifications UserNotification[]
+
+  @@map("Notification")
+}
+
+model UserNotification {
+  id             Int          @id @default(autoincrement()) @map("UserNotificationID")
+  notificationId Int          @map("NotificationID")
+  memberId       Int          @map("MemberID")
+  readStatus     Boolean      @default(false) @map("ReadStatus")
+  sentDate       DateTime     @default(now()) @map("SentDate")
+  readDate       DateTime?    @map("ReadDate")
+
+  // Relationships
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  member         Member       @relation(fields: [memberId], references: [id])
+
+  @@map("UserNotification")
+}
+
+// ========================================
+// 7. AUDIT & TRACKING MODULE
+// ========================================
+
+model AuditLog {
+  id          Int      @id @default(autoincrement()) @map("LogID")
+  tableName   String   @map("TableName")
+  recordId    Int      @map("RecordID")
+  action      String   @map("Action")
+  oldValue    String?  @map("OldValue")
+  newValue    String?  @map("NewValue")
+  changedBy   Int?     @map("ChangedBy")
+  changedDate DateTime @default(now()) @map("ChangedDate")
+  ipAddress   String?  @map("IPAddress")
+
+  // Relationships
+  member      Member?  @relation(fields: [changedBy], references: [id])
+
+  @@map("AuditLog")
+}
+
+// ========================================
+// EXTRA / LEGACY MODULES (Maintained for System Compatibility)
+// ========================================
+
+model Event {
+  id          Int      @id @default(autoincrement()) @map("EventID")
+  title       String   @map("Title")
+  description String   @map("Description")
+  date        DateTime @map("EventDate")
+  time        String   @map("EventTime")
+  location    String   @map("Location")
+  imageUrl    String?  @map("ImageUrl")
+  status      String   @default("Upcoming") @map("Status")
+  ticketPrice Float?   @map("TicketPrice")
+  category    String   @default("social") @map("Category")
+  totalTickets Int     @default(100) @map("TotalTickets")
+  createdDate DateTime @default(now()) @map("CreatedDate")
+
+  @@map("Event")
+}
+
+model Promotion {
+  id          Int      @id @default(autoincrement()) @map("PromotionID")
+  title       String   @map("Title")
+  description String   @map("Description")
+  validUntil  DateTime @map("ValidUntil")
+  isActive    Boolean  @default(true) @map("IsActive")
+  createdDate DateTime @default(now()) @map("CreatedDate")
+
+  @@map("Promotion")
+}
+
+model Shift {
+  id        Int      @id @default(autoincrement()) @map("ShiftID")
+  staffId   Int      @map("StaffID")
+  startTime DateTime @default(now()) @map("StartTime")
+  endTime   DateTime? @map("EndTime")
+  notes     String?  @map("Notes")
+  
+  staff     Member   @relation(fields: [staffId], references: [id])
+  
+  @@map("Shift")
+}
+
+model VenueAssignment {
+  id             Int      @id @default(autoincrement()) @map("AssignmentID")
+  venueId        Int      @map("VenueID")
+  staffId        Int      @map("StaffID")
+  assignmentDate DateTime @map("AssignmentDate")
+  startTime      String   @map("StartTime")
+  endTime        String   @map("EndTime")
+  role           String   @map("Role")
+  status         String   @default("scheduled") @map("Status")
+  eventName      String?  @map("EventName")
+
+  venue Venue  @relation(fields: [venueId], references: [id])
+  staff Member @relation(fields: [staffId], references: [id])
+
+  @@map("VenueAssignment")
+}
+
+model MembershipUpgradeRequest {
+  id          Int      @id @default(autoincrement()) @map("RequestID")
+  memberId    Int      @map("MemberID")
+  oldPlanId   String   @map("OldPlanID")
+  newPlanId   String   @map("NewPlanID")
+  status      String   @default("Pending") @map("Status")
+  requestDate DateTime @default(now()) @map("RequestDate")
+  
+  member      Member   @relation(fields: [memberId], references: [id])
+
+  @@map("MembershipUpgradeRequest")
+}
+
+model PasswordResetOtp {
+  id        Int      @id @default(autoincrement())
+  email     String   @map("Email")
+  otp       String   @map("OTP")
+  expiresAt DateTime @map("ExpiresAt")
+  used      Boolean  @default(false) @map("Used")
+  createdAt DateTime @default(now()) @map("CreatedAt")
+
+  @@map("PasswordResetOtp")
+}

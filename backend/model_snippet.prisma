@@ -1,0 +1,14 @@
+model Event {
+  id          Int      @id @default(autoincrement()) @map("EventID")
+  title       String   @map("Title")
+  description String   @map("Description")
+  date        DateTime @map("EventDate")
+  time        String   @map("EventTime")
+  location    String   @map("Location")
+  imageUrl    String?  @map("ImageUrl")
+  status      String   @default("Upcoming") @map("Status") // Upcoming, Completed, Cancelled
+  ticketPrice Float?   @map("TicketPrice")
+  createdDate DateTime @default(now()) @map("CreatedDate")
+
+  @@map("Event")
+}

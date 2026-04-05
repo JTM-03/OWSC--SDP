@@ -1,0 +1,412 @@
+
+[2026-01-27T15:28:17.430Z] REGISTRATION ERROR:
+Error: Username already taken
+    at D:\restaurant-management-system\backend\src\routes\auth.js:30:19
+
+[2026-03-18T11:07:06.756Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:47:42
+
+  44 
+  45 // Create user and membership in a transaction
+  46 const result = await prisma.$transaction(async (tx) => {
+→ 47     const user = await tx.member.create({
+           data: {
+             fullName: "Rumeshika ",
+             email: "Rumeshika@gmail.com",
+             username: "Rumeshika123",
+             passwordHash: "$2b$10$KwOj/8nvcPi6.hoo8w3QFeQjXEHEO0Bl2QqIYcmsJJDaIWmuDPT5a",
+             phone: "0761857189",
+             address: "Piliyandala",
+             nic: "200234512345",
+             emergencyContact: "Thenul Minjaya",
+             ~~~~~~~~~~~~~~~~
+             emergencyPhone: "0763631145",
+             role: "member",
+             status: "Active",
+         ?   notificationPreference?: String,
+         ?   registrationDate?: DateTime,
+         ?   memberships?: UserCreateNestedManyWithoutMemberInput,
+         ?   membershipPayments?: MembershipPaymentCreateNestedManyWithoutMemberInput,
+         ?   venueBookings?: VenueBookingCreateNestedManyWithoutMemberInput,
+         ?   bookingPayments?: BookingPaymentCreateNestedManyWithoutMemberInput,
+         ?   reservations?: TableReservationCreateNestedManyWithoutMemberInput,
+         ?   cart?: CartCreateNestedOneWithoutMemberInput,
+         ?   orders?: OrderCreateNestedManyWithoutMemberInput,
+         ?   orderPayments?: OrderPaymentCreateNestedManyWithoutMemberInput,
+         ?   userNotifications?: UserNotificationCreateNestedManyWithoutMemberInput,
+         ?   stockMovements?: StockMovementCreateNestedManyWithoutMemberInput,
+         ?   auditLogs?: AuditLogCreateNestedManyWithoutMemberInput,
+         ?   shifts?: ShiftCreateNestedManyWithoutStaffInput,
+         ?   venueAssignments?: VenueAssignmentCreateNestedManyWithoutStaffInput,
+         ?   membershipRequests?: MembershipUpgradeRequestCreateNestedManyWithoutMemberInput
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Unknown argument `emergencyContact`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:47:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-03-18T11:07:11.327Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:47:42
+
+  44 
+  45 // Create user and membership in a transaction
+  46 const result = await prisma.$transaction(async (tx) => {
+→ 47     const user = await tx.member.create({
+           data: {
+             fullName: "Rumeshika ",
+             email: "Rumeshika@gmail.com",
+             username: "Rumeshika123",
+             passwordHash: "$2b$10$wuMEgK5jtSsfX1GFry/KeOZgPLx0UPvXPstGI1LxA/F8.LZiwo.l6",
+             phone: "0761857189",
+             address: "Piliyandala",
+             nic: "200234512345",
+             emergencyContact: "Thenul Minjaya",
+             ~~~~~~~~~~~~~~~~
+             emergencyPhone: "0763631145",
+             role: "member",
+             status: "Active",
+         ?   notificationPreference?: String,
+         ?   registrationDate?: DateTime,
+         ?   memberships?: UserCreateNestedManyWithoutMemberInput,
+         ?   membershipPayments?: MembershipPaymentCreateNestedManyWithoutMemberInput,
+         ?   venueBookings?: VenueBookingCreateNestedManyWithoutMemberInput,
+         ?   bookingPayments?: BookingPaymentCreateNestedManyWithoutMemberInput,
+         ?   reservations?: TableReservationCreateNestedManyWithoutMemberInput,
+         ?   cart?: CartCreateNestedOneWithoutMemberInput,
+         ?   orders?: OrderCreateNestedManyWithoutMemberInput,
+         ?   orderPayments?: OrderPaymentCreateNestedManyWithoutMemberInput,
+         ?   userNotifications?: UserNotificationCreateNestedManyWithoutMemberInput,
+         ?   stockMovements?: StockMovementCreateNestedManyWithoutMemberInput,
+         ?   auditLogs?: AuditLogCreateNestedManyWithoutMemberInput,
+         ?   shifts?: ShiftCreateNestedManyWithoutStaffInput,
+         ?   venueAssignments?: VenueAssignmentCreateNestedManyWithoutStaffInput,
+         ?   membershipRequests?: MembershipUpgradeRequestCreateNestedManyWithoutMemberInput
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Unknown argument `emergencyContact`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:47:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-03-18T11:07:17.660Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:47:42
+
+  44 
+  45 // Create user and membership in a transaction
+  46 const result = await prisma.$transaction(async (tx) => {
+→ 47     const user = await tx.member.create({
+           data: {
+             fullName: "Rumeshika ",
+             email: "Rumeshika@gmail.com",
+             username: "Rumeshika123",
+             passwordHash: "$2b$10$ICIF.HlDBHTpnF2MfRAU4e1j1c1a1cjZwKAULDJhbiO8CGBmuvzoe",
+             phone: "0761857189",
+             address: "Piliyandala",
+             nic: "200234512345",
+             emergencyContact: "Thenul Minjaya",
+             ~~~~~~~~~~~~~~~~
+             emergencyPhone: "0763631145",
+             role: "member",
+             status: "Active",
+         ?   notificationPreference?: String,
+         ?   registrationDate?: DateTime,
+         ?   memberships?: UserCreateNestedManyWithoutMemberInput,
+         ?   membershipPayments?: MembershipPaymentCreateNestedManyWithoutMemberInput,
+         ?   venueBookings?: VenueBookingCreateNestedManyWithoutMemberInput,
+         ?   bookingPayments?: BookingPaymentCreateNestedManyWithoutMemberInput,
+         ?   reservations?: TableReservationCreateNestedManyWithoutMemberInput,
+         ?   cart?: CartCreateNestedOneWithoutMemberInput,
+         ?   orders?: OrderCreateNestedManyWithoutMemberInput,
+         ?   orderPayments?: OrderPaymentCreateNestedManyWithoutMemberInput,
+         ?   userNotifications?: UserNotificationCreateNestedManyWithoutMemberInput,
+         ?   stockMovements?: StockMovementCreateNestedManyWithoutMemberInput,
+         ?   auditLogs?: AuditLogCreateNestedManyWithoutMemberInput,
+         ?   shifts?: ShiftCreateNestedManyWithoutStaffInput,
+         ?   venueAssignments?: VenueAssignmentCreateNestedManyWithoutStaffInput,
+         ?   membershipRequests?: MembershipUpgradeRequestCreateNestedManyWithoutMemberInput
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Unknown argument `emergencyContact`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:47:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-03-18T11:07:31.591Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:47:42
+
+  44 
+  45 // Create user and membership in a transaction
+  46 const result = await prisma.$transaction(async (tx) => {
+→ 47     const user = await tx.member.create({
+           data: {
+             fullName: "Rumeshika ",
+             email: "Rumeshika@gmail.com",
+             username: "Rumeshika123",
+             passwordHash: "$2b$10$/ESnP9Lv3Y94uu9X1Sz.R.EIQzyQmAtgbdyQPjWICtgn4OADvVWPm",
+             phone: "0761857189",
+             address: "Piliyandala",
+             nic: "200234512345",
+             emergencyContact: "Thenul Minjaya",
+             ~~~~~~~~~~~~~~~~
+             emergencyPhone: "0763631145",
+             role: "member",
+             status: "Active",
+         ?   notificationPreference?: String,
+         ?   registrationDate?: DateTime,
+         ?   memberships?: UserCreateNestedManyWithoutMemberInput,
+         ?   membershipPayments?: MembershipPaymentCreateNestedManyWithoutMemberInput,
+         ?   venueBookings?: VenueBookingCreateNestedManyWithoutMemberInput,
+         ?   bookingPayments?: BookingPaymentCreateNestedManyWithoutMemberInput,
+         ?   reservations?: TableReservationCreateNestedManyWithoutMemberInput,
+         ?   cart?: CartCreateNestedOneWithoutMemberInput,
+         ?   orders?: OrderCreateNestedManyWithoutMemberInput,
+         ?   orderPayments?: OrderPaymentCreateNestedManyWithoutMemberInput,
+         ?   userNotifications?: UserNotificationCreateNestedManyWithoutMemberInput,
+         ?   stockMovements?: StockMovementCreateNestedManyWithoutMemberInput,
+         ?   auditLogs?: AuditLogCreateNestedManyWithoutMemberInput,
+         ?   shifts?: ShiftCreateNestedManyWithoutStaffInput,
+         ?   venueAssignments?: VenueAssignmentCreateNestedManyWithoutStaffInput,
+         ?   membershipRequests?: MembershipUpgradeRequestCreateNestedManyWithoutMemberInput
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Unknown argument `emergencyContact`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:47:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-03-18T11:20:51.720Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.user.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:84:31
+
+  81     endDate.setFullYear(endDate.getFullYear() + 1)
+  82 }
+  83 
+→ 84 await tx.user.create({
+       data: {
+         memberId: 5,
+         startDate: new Date("2026-03-18T11:20:51.704Z"),
+         endDate: new Date("2027-03-18T11:20:51.704Z"),
+         status: "Pending",
+         membershipFee: 15000,
+         type: "full",
+     +   membershipType: String
+       }
+     })
+
+Argument `membershipType` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:84:17
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-03-18T11:20:57.233Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.user.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:84:31
+
+  81     endDate.setFullYear(endDate.getFullYear() + 1)
+  82 }
+  83 
+→ 84 await tx.user.create({
+       data: {
+         memberId: 6,
+         startDate: new Date("2026-03-18T11:20:57.229Z"),
+         endDate: new Date("2027-03-18T11:20:57.229Z"),
+         status: "Pending",
+         membershipFee: 15000,
+         type: "full",
+     +   membershipType: String
+       }
+     })
+
+Argument `membershipType` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:84:17
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:46:24
+
+[2026-04-03T16:38:09.471Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:49:42
+
+  46 
+  47 // Create user and membership in a transaction
+  48 const result = await prisma.$transaction(async (tx) => {
+→ 49     const user = await tx.member.create({
+           data: {
+             fullName: "Saman Kumara",
+             email: "Saman@email.com",
+             username: "Saman",
+             passwordHash: "$2b$10$nnRvlkCHDK/tslEkglQzUOHcRsr7y5hVtasXDFjJX8DbGbYD/zuLe",
+             phone: "0784532345",
+             address: undefined,
+             emergencyContact: undefined,
+             emergencyPhone: undefined,
+             paymentSlipUrl: null,
+             role: "staff",
+             status: "Active",
+         +   nic: String
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Argument `nic` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:49:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:48:24
+
+[2026-04-03T16:40:07.357Z] REGISTRATION ERROR:
+PrismaClientValidationError: 
+Invalid `tx.member.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:49:42
+
+  46 
+  47 // Create user and membership in a transaction
+  48 const result = await prisma.$transaction(async (tx) => {
+→ 49     const user = await tx.member.create({
+           data: {
+             fullName: "Saman Kumara",
+             email: "Saman@email.com",
+             username: "Saman",
+             passwordHash: "$2b$10$Dvtf8UDazjoEGCxg34ZLveIYX9TnR98Ig5zPOgN/pyHqTSqARrTl6",
+             phone: "0784532345",
+             address: undefined,
+             emergencyContact: undefined,
+             emergencyPhone: undefined,
+             paymentSlipUrl: null,
+             role: "staff",
+             status: "Active",
+         +   nic: String
+           },
+           select: {
+             id: true,
+             fullName: true,
+             email: true,
+             username: true,
+             role: true,
+             loyaltyPoints: true,
+             registrationDate: true,
+             emergencyContact: true,
+             emergencyPhone: true
+           }
+         })
+
+Argument `nic` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:49:26
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:48:24

@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "name": "Kottu - Chicken",
+    "category": "mains",
+    "description": "Chicken Kottu",
+    "price": "1600",
+    "imageUrl": null,
+    "availabilityStatus": "Available",
+    "isPopular": false,
+    "isVegetarian": false,
+    "isSpicy": false,
+    "prepTime": null
+  }
+]
