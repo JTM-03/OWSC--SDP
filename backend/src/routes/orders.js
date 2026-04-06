@@ -4,6 +4,7 @@ const { validate } = require("../middleware/validate")
 const { orderSchema } = require("../validation/schemas")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { isRestrictedDate } = require("../utils/dateRestriction")
 
 const router = express.Router()
 
@@ -50,6 +51,10 @@ router.get("/my", authenticate, async (req, res, next) => {
 // POST /api/orders - Place a new order
 router.post("/", authenticate, validate(orderSchema), async (req, res, next) => {
     try {
+        if (isRestrictedDate(new Date())) {
+            throw new BadRequestError('Cannot place food orders on Sundays or Poya days.');
+        }
+
         const { orderType, items } = req.validatedData
         const memberId = req.user.id
 

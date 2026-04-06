@@ -4,6 +4,7 @@ const { validate } = require("../middleware/validate")
 const { venueSchema, bookingSchema } = require("../validation/schemas")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { isRestrictedDate } = require("../utils/dateRestriction")
 const upload = require("../config/upload")
 
 const router = express.Router()
@@ -204,6 +205,10 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
             startTime,
             endTime
         });
+
+        if (isRestrictedDate(bookingDate)) {
+            throw new BadRequestError('Cannot book venues on Sundays or Poya days.');
+        }
 
         const memberId = req.user.id
 

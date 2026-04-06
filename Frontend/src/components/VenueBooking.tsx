@@ -11,6 +11,8 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { venueAPI, Venue } from "../api/venue";
+import { isRestrictedDate } from "../utils/dateRestriction";
+import api from '../api/axios';
 
 interface VenueBookingProps {
   onBack: () => void;
@@ -34,6 +36,9 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState("");
   const [guestCount, setGuestCount] = useState("");
+  const [bookingMode, setBookingMode] = useState<'venue' | 'table'>('venue');
+  const [tableLocation, setTableLocation] = useState<'Indoor' | 'Outdoor'>('Indoor');
+  const [tableCount, setTableCount] = useState("1");
   const [selectedVenueFilter, setSelectedVenueFilter] = useState("all");
   const [occasion, setOccasion] = useState("all");
   const [selectedBranch, setSelectedBranch] = useState("main");
@@ -74,6 +79,11 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
   const handleSearch = async () => {
     if (!selectedDate || !startTime || !endTime) {
       toast.error("Please select date and time range");
+      return;
+    }
+    
+    if (isRestrictedDate(selectedDate)) {
+      toast.error( bookingMode === 'venue' ? "Venue bookings are not allowed on Sundays or Poya days." : "Table bookings are not allowed on Sundays or Poya days.");
       return;
     }
 
@@ -138,15 +148,14 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
       toast.error("Please fill in all fields including time range");
       return;
     }
-
-    // Simulate availability check - randomly decide if venue is available (80% chance)
-    const isAvailable = Math.random() > 0.2;
-
-    if (isAvailable) {
-      setBookingStep('payment');
-    } else {
-      setBookingStep('unavailable');
+    
+    if (isRestrictedDate(bookingForm.eventDate)) {
+      toast.error("Cannot book on Sundays or Poya days.");
+      return;
     }
+
+    // Proceeds to payment directly.
+    setBookingStep('payment');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,18 +174,27 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
     if (!bookingForm.venue) return;
 
     try {
-      const formData = new FormData();
-      formData.append('venueId', bookingForm.venue.id.toString());
-      formData.append('bookingDate', new Date(bookingForm.eventDate).toISOString());
-      formData.append('startTime', startTime);
-      formData.append('endTime', endTime);
-      formData.append('amount', bookingForm.venue.price.toString()); // Assuming price is total amount
-      formData.append('paymentMethod', 'Bank Transfer');
-      if (receiptFile) {
-        formData.append('receipt', receiptFile);
+      if (bookingMode === 'table') {
+        const formData = new FormData();
+        formData.append('location', tableLocation);
+        formData.append('tableCount', tableCount);
+        formData.append('reservationDate', new Date(bookingForm.eventDate).toISOString());
+        formData.append('reservationTime', `${startTime} - ${endTime}`);
+        if (receiptFile) formData.append('receipt', receiptFile);
+        
+        await api.post('/tables/book', formData);
+      } else {
+        const formData = new FormData();
+        formData.append('venueId', bookingForm.venue!.id.toString());
+        formData.append('bookingDate', new Date(bookingForm.eventDate).toISOString());
+        formData.append('startTime', startTime);
+        formData.append('endTime', endTime);
+        formData.append('amount', bookingForm.venue!.price.toString());
+        formData.append('paymentMethod', 'Bank Transfer');
+        if (receiptFile) formData.append('receipt', receiptFile);
+  
+        await venueAPI.createBooking(formData);
       }
-
-      await venueAPI.createBooking(formData);
 
       toast.success("Booking submitted successfully!", {
         description: "Our team will verify your payment and confirm your booking shortly."
@@ -226,6 +244,23 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
       </header>
 
       <div className="container mx-auto px-6 py-8">
+        
+        {/* Toggle Mode */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-muted p-1 rounded-lg inline-flex">
+            <Button 
+                variant={bookingMode === 'venue' ? 'default' : 'ghost'} 
+                className={bookingMode === 'venue' ? 'bg-primary text-white shadow-sm' : ''}
+                onClick={() => setBookingMode('venue')}
+            >Book Facility</Button>
+            <Button 
+                variant={bookingMode === 'table' ? 'default' : 'ghost'} 
+                className={bookingMode === 'table' ? 'bg-primary text-white shadow-sm' : ''}
+                onClick={() => setBookingMode('table')}
+            >Book Tables</Button>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Filter Panel */}
           <Card className="lg:col-span-1 h-fit">
@@ -256,7 +291,12 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                   id="date"
                   type="date"
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    if (isRestrictedDate(e.target.value)) {
+                       toast.error("Cannot book on Sundays or Poya days.", { id: "date-restricted" });
+                    }
+                  }}
                 />
               </div>
 
@@ -328,9 +368,68 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
             </CardContent>
           </Card>
 
-          {/* Venue Grid */}
+           {/* Venue/Table Grid */}
           <div className="lg:col-span-3">
-            {loading ? (
+            {bookingMode === 'table' ? (
+               <Card>
+                 <CardHeader>
+                   <CardTitle>Table Bookings</CardTitle>
+                   <CardDescription>Reserve tables for your visit</CardDescription>
+                 </CardHeader>
+                 <CardContent className="space-y-6">
+                    <div className="bg-muted/30 p-4 rounded-lg flex items-center gap-4 mb-4">
+                       <Users className="w-8 h-8 text-secondary" />
+                       <div>
+                          <p className="font-semibold text-foreground">Each table seats up to 5 people</p>
+                          <p className="text-sm text-muted-foreground">Price: Rs 200 per table</p>
+                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                          <Label>Table Location</Label>
+                          <Select value={tableLocation} onValueChange={(v: "Indoor" | "Outdoor") => setTableLocation(v)}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Indoor">Indoor (Air Conditioned)</SelectItem>
+                              <SelectItem value="Outdoor">Outdoor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                       </div>
+                       <div className="space-y-2">
+                          <Label>Quantity of Tables</Label>
+                          <Input type="number" min="1" max={tableLocation === 'Indoor' ? 15 : 20} value={tableCount} onChange={(e) => setTableCount(e.target.value)} />
+                       </div>
+                    </div>
+                 </CardContent>
+                 <CardFooter>
+                     <Button 
+                        className="w-full bg-secondary hover:bg-secondary/90 text-primary" 
+                        onClick={() => {
+                          // Bypass search directly to booking process
+                          if (!selectedDate || !startTime || !endTime) {
+                             toast.error("Please select a date and time range on the left panel");
+                             return;
+                          }
+                          if (isRestrictedDate(selectedDate)) {
+                             toast.error("Cannot book on Sundays or Poya days.");
+                             return;
+                          }
+                          setBookingForm({
+                             venue: { id: 0, name: `${tableCount} ${tableLocation} Table(s)`, price: parseInt(tableCount) * 200 },
+                             numberOfPeople: (parseInt(tableCount) * 5).toString(),
+                             eventDate: selectedDate,
+                             timeSlot: `${startTime} - ${endTime}`,
+                             eventType: 'Dining'
+                          });
+                          setBookingStep('payment');
+                          setShowBookingDialog(true);
+                          setReceiptFile(null);
+                        }}
+                     >Proceed to Payment</Button>
+                 </CardFooter>
+               </Card>
+            ) : loading ? (
               <div className="flex flex-col items-center justify-center py-24">
                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
                 <p className="text-muted-foreground">Loading facilities...</p>

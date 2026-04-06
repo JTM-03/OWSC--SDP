@@ -41,7 +41,7 @@ app.use("/api/payments", require("./routes/payments"))
 app.use("/api/suppliers", require("./routes/suppliers"))
 app.use("/api/deliveries", require("./routes/deliveries"))
 app.use("/api/notifications", require("./routes/notifications"))
-
+app.use("/api/tables", require("./routes/tables"))
 
 // 404 handler
 app.use((req, res) => {

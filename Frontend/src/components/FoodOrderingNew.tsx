@@ -25,6 +25,7 @@ import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { menuAPI, MenuItem as APIMenuItem } from "../api/menu";
 import { orderAPI } from "../api/order";
+import { isRestrictedDate } from "../utils/dateRestriction";
 
 interface FoodOrderingProps {
   onBack: () => void;
@@ -150,6 +151,11 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
   };
 
   const handleCheckout = () => {
+    if (isRestrictedDate(new Date())) {
+      toast.error("Cannot place food orders on Sundays or Poya days.");
+      return;
+    }
+
     if (cart.length === 0) {
       toast.error("Your cart is empty");
       return;
