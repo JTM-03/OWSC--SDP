@@ -87,7 +87,7 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
       (member.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.id.toString().includes(searchTerm);
     const matchesStatus = statusFilter === "all" || (status.toLowerCase() === statusFilter.toLowerCase());
-    
+
     // Check type
     const mType = (activeMembership?.type || "full").toLowerCase();
     const matchesType = typeFilter === "all" || mType === typeFilter.toLowerCase();

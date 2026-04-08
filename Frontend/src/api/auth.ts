@@ -12,6 +12,7 @@ export interface User {
     emergencyContact?: string;
     emergencyPhone?: string;
     status: string;
+    password?: string;
 }
 
 export interface RegisterData {

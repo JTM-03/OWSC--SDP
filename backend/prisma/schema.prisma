@@ -30,6 +30,7 @@ model Member {
   emergencyPhone         String?   @map("EmergencyPhone")
   loyaltyPoints          Int       @default(0) @map("LoyaltyPoints")
   paymentSlipUrl         String?   @map("PaymentSlipUrl")
+  profileImageUrl        String?   @map("ProfileImageUrl")
 
   // Relationships
   memberships          User[]
@@ -108,14 +109,15 @@ model Venue {
 }
 
 model VenueBooking {
-  id            Int      @id @default(autoincrement()) @map("BookingID")
-  memberId      Int      @map("MemberID")
-  venueId       Int      @map("VenueID")
-  bookingDate   DateTime @map("BookingDate") // Date
-  timeSlot      String   @map("TimeSlot")
-  bookingStatus String   @default("Pending") @map("BookingStatus")
-  purpose       String?  @map("Purpose")
-  createdDate   DateTime @default(now()) @map("CreatedDate")
+  id                 Int      @id @default(autoincrement()) @map("BookingID")
+  memberId           Int      @map("MemberID")
+  venueId            Int      @map("VenueID")
+  bookingDate        DateTime @map("BookingDate") // Date
+  timeSlot           String   @map("TimeSlot")
+  bookingStatus      String   @default("Pending") @map("BookingStatus")
+  cancellationReason String?  @map("CancellationReason")
+  purpose            String?  @map("Purpose")
+  createdDate        DateTime @default(now()) @map("CreatedDate")
 
   // Relationships
   member        Member          @relation(fields: [memberId], references: [id])

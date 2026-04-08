@@ -41,6 +41,8 @@ export function PaymentHistory({ onBack }: PaymentHistoryProps) {
         };
 
         fetchPayments();
+        const interval = setInterval(fetchPayments, 15000);
+        return () => clearInterval(interval);
     }, []);
 
     const generateReceipt = async (payment: PaymentRecord, type: string) => {
@@ -97,9 +99,9 @@ export function PaymentHistory({ onBack }: PaymentHistoryProps) {
                             <TableRow key={payment.id}>
                                 <TableCell>{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
                                 <TableCell>
-                                    {type === 'membership' && `Membership Payment`}
-                                    {type === 'booking' && `Venue Booking #${payment.bookingId}`}
-                                    {type === 'order' && `Food Order #${payment.orderId}`}
+                                    {('orderId' in payment) ? `Food Order #${(payment as any).orderId}` : 
+                                     ('bookingId' in payment) ? `Venue Booking #${(payment as any).bookingId}` : 
+                                     `Membership Payment`}
                                 </TableCell>
                                 <TableCell>{payment.paymentMethod}</TableCell>
                                 <TableCell>
@@ -108,10 +110,10 @@ export function PaymentHistory({ onBack }: PaymentHistoryProps) {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
-                                    Rs. {payment.amount.toLocaleString()}
+                                    Rs. {Number(payment.amount).toLocaleString()}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="sm" onClick={() => generateReceipt(payment, type)}>
+                                    <Button variant="ghost" size="sm" onClick={() => generateReceipt(payment, ('orderId' in payment) ? 'order' : ('bookingId' in payment) ? 'booking' : 'membership')}>
                                         <Download className="w-4 h-4 mr-2" />
                                         Receipt
                                     </Button>

@@ -11,7 +11,19 @@ const router = express.Router()
 // GET /api/orders - List all orders (Staff/Admin only)
 router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
         const orders = await prisma.order.findMany({
+            where: {
+                OR: [
+                    { orderStatus: { notIn: ['Completed', 'Cancelled', 'completed', 'cancelled'] } },
+                    { 
+                        orderStatus: { in: ['Completed', 'Cancelled', 'completed', 'cancelled'] },
+                        orderDate: { gte: twentyFourHoursAgo }
+                    }
+                ]
+            },
             include: {
                 member: {
                     select: { id: true, fullName: true, email: true }

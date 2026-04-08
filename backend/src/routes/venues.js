@@ -198,6 +198,10 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
         const amount = parseFloat(req.body.amount);
         const paymentMethod = req.body.paymentMethod;
 
+        if (!amount || !paymentMethod) {
+            throw new BadRequestError('Amount and payment method are required');
+        }
+
         // Validation
         const bookingData = bookingSchema.parse({
             venueId,
@@ -305,6 +309,7 @@ router.put("/bookings/:id/cancel", authenticate, async (req, res, next) => {
     try {
         const { id } = req.params;
         const memberId = req.user.id; // From auth middleware
+        const { reason } = req.body; // cancellation reason
 
         const booking = await prisma.venueBooking.findUnique({
             where: { id: parseInt(id) },
@@ -323,21 +328,18 @@ router.put("/bookings/:id/cancel", authenticate, async (req, res, next) => {
             return res.status(400).json({ error: "Booking is already cancelled" });
         }
 
-        // Optional: Check if cancellable (e.g., 24h before)
-        // const eventDate = new Date(booking.bookingDate);
-        // if (eventDate - new Date() < 24 * 60 * 60 * 1000) ...
-
+        // Update with cancellation reason
         const updatedBooking = await prisma.venueBooking.update({
             where: { id: parseInt(id) },
-            data: { bookingStatus: 'Cancelled' }
+            data: { bookingStatus: 'Cancelled', cancellationReason: reason || null }
         });
 
-        // NOTIFICATION
+        // NOTIFICATION with reason
         const { sendNotification } = require("../services/notificationService");
         await sendNotification(
             memberId,
             "Booking Cancelled",
-            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString()} has been cancelled.`,
+            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString()} has been cancelled. Reason: ${reason || 'No reason provided.'}`,
             "alert"
         );
 

@@ -37,7 +37,7 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
   const [selectedDate, setSelectedDate] = useState("");
   const [guestCount, setGuestCount] = useState("");
   const [bookingMode, setBookingMode] = useState<'venue' | 'table'>('venue');
-  const [tableLocation, setTableLocation] = useState<'Indoor' | 'Outdoor'>('Indoor');
+  const [tableLocation, setTableLocation] = useState<'Indoor Non-AC (TV Area)' | 'Indoor AC (Presidential Lounge)' | 'Outdoor (Lawn Area)'>('Indoor AC (Presidential Lounge)');
   const [tableCount, setTableCount] = useState("1");
   const [selectedVenueFilter, setSelectedVenueFilter] = useState("all");
   const [occasion, setOccasion] = useState("all");
@@ -330,37 +330,41 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="occasion">Occasion Type</Label>
-                <Select value={occasion} onValueChange={setOccasion}>
-                  <SelectTrigger id="occasion">
-                    <SelectValue placeholder="Select occasion" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Any Occasion</SelectItem>
-                    <SelectItem value="Wedding">Wedding</SelectItem>
-                    <SelectItem value="Birthday">Birthday Party</SelectItem>
-                    <SelectItem value="Corporate">Corporate Event</SelectItem>
-                    <SelectItem value="Meeting">Meeting</SelectItem>
-                    <SelectItem value="GetTogether">Get Together</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {bookingMode === 'venue' && (
+                <div className="space-y-2">
+                  <Label htmlFor="occasion">Occasion Type</Label>
+                  <Select value={occasion} onValueChange={setOccasion}>
+                    <SelectTrigger id="occasion">
+                      <SelectValue placeholder="Select occasion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Any Occasion</SelectItem>
+                      <SelectItem value="Wedding">Wedding</SelectItem>
+                      <SelectItem value="Birthday">Birthday Party</SelectItem>
+                      <SelectItem value="Corporate">Corporate Event</SelectItem>
+                      <SelectItem value="Meeting">Meeting</SelectItem>
+                      <SelectItem value="GetTogether">Get Together</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="venueSelect">Select Facility</Label>
-                <Select value={selectedVenueFilter} onValueChange={setSelectedVenueFilter}>
-                  <SelectTrigger id="venueSelect">
-                    <SelectValue placeholder="All Facilities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Facilities</SelectItem>
-                    {allVenues.map(venue => (
-                      <SelectItem key={venue.id} value={venue.id.toString()}>{venue.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {bookingMode === 'venue' && (
+                <div className="space-y-2">
+                  <Label htmlFor="venueSelect">Select Facility</Label>
+                  <Select value={selectedVenueFilter} onValueChange={setSelectedVenueFilter}>
+                    <SelectTrigger id="venueSelect">
+                      <SelectValue placeholder="All Facilities" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Facilities</SelectItem>
+                      {allVenues.map(venue => (
+                        <SelectItem key={venue.id} value={venue.id.toString()}>{venue.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <Button className="w-full bg-secondary text-primary hover:bg-secondary/90" onClick={handleSearch}>
                 Check Availability
@@ -388,17 +392,18 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                     <div className="grid grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <Label>Table Location</Label>
-                          <Select value={tableLocation} onValueChange={(v: "Indoor" | "Outdoor") => setTableLocation(v)}>
+                          <Select value={tableLocation} onValueChange={(v: "Indoor Non-AC (TV Area)" | "Indoor AC (Presidential Lounge)" | "Outdoor (Lawn Area)") => setTableLocation(v)}>
                             <SelectTrigger><SelectValue/></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Indoor">Indoor (Air Conditioned)</SelectItem>
-                              <SelectItem value="Outdoor">Outdoor</SelectItem>
+                              <SelectItem value="Indoor Non-AC (TV Area)">Indoor Non-AC (TV Area)</SelectItem>
+                              <SelectItem value="Indoor AC (Presidential Lounge)">Indoor AC (Presidential Lounge)</SelectItem>
+                              <SelectItem value="Outdoor (Lawn Area)">Outdoor (Lawn Area)</SelectItem>
                             </SelectContent>
                           </Select>
                        </div>
                        <div className="space-y-2">
                           <Label>Quantity of Tables</Label>
-                          <Input type="number" min="1" max={tableLocation === 'Indoor' ? 15 : 20} value={tableCount} onChange={(e) => setTableCount(e.target.value)} />
+                          <Input type="number" min="1" max={tableLocation.includes('Outdoor') ? 20 : 15} value={tableCount} onChange={(e) => setTableCount(e.target.value)} />
                        </div>
                     </div>
                  </CardContent>

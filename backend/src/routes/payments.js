@@ -130,11 +130,14 @@ router.post("/", authenticate, validate(paymentSchema), async (req, res, next) =
 router.get("/my", authenticate, async (req, res, next) => {
     try {
         const memberId = req.user.id
+        
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
         const [membershipPayments, bookingPayments, orderPayments] = await Promise.all([
-            prisma.membershipPayment.findMany({ where: { memberId }, orderBy: { paymentDate: 'desc' } }),
-            prisma.bookingPayment.findMany({ where: { memberId }, orderBy: { paymentDate: 'desc' } }),
-            prisma.orderPayment.findMany({ where: { memberId }, orderBy: { paymentDate: 'desc' } })
+            prisma.membershipPayment.findMany({ where: { memberId, paymentDate: { gte: oneYearAgo } }, orderBy: { paymentDate: 'desc' } }),
+            prisma.bookingPayment.findMany({ where: { memberId, paymentDate: { gte: oneYearAgo } }, orderBy: { paymentDate: 'desc' } }),
+            prisma.orderPayment.findMany({ where: { memberId, paymentDate: { gte: oneYearAgo } }, orderBy: { paymentDate: 'desc' } })
         ])
 
         res.json({

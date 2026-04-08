@@ -5,7 +5,7 @@ const prisma = require("../lib/prisma")
 const { validate } = require("../middleware/validate")
 const { registerSchema, loginSchema } = require("../validation/schemas")
 const { authenticate } = require("../middleware/auth")
-const { ConflictError, UnauthorizedError, NotFoundError } = require("../utils/errors")
+const { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } = require("../utils/errors")
 const upload = require("../config/upload")
 
 const router = express.Router()
@@ -209,7 +209,8 @@ router.get("/me", authenticate, async (req, res, next) => {
                 registrationDate: true,
                 notificationPreference: true,
                 emergencyContact: true,
-                emergencyPhone: true
+                emergencyPhone: true,
+                profileImageUrl: true
             }
         })
 
@@ -258,7 +259,8 @@ router.put("/me", authenticate, async (req, res, next) => {
                 ...(emergencyPhone && { emergencyPhone }),
                 ...(notificationPreference && { notificationPreference }),
                 ...(username && { username }),
-                ...(passwordHash && { passwordHash })
+                ...(passwordHash && { passwordHash }),
+                ...(req.body.profileImageUrl && { profileImageUrl: req.body.profileImageUrl })
             },
             select: {
                 id: true,
@@ -280,6 +282,23 @@ router.put("/me", authenticate, async (req, res, next) => {
         })
     } catch (error) {
         next(error)
+    }
+})
+
+// Upload profile picture
+router.post("/me/picture", authenticate, upload.single('image'), async (req, res, next) => {
+    try {
+        if (!req.file) throw new BadRequestError('No image uploaded');
+        const profileImageUrl = `/uploads/${req.file.filename}`;
+        
+        await prisma.member.update({
+            where: { id: req.user.id },
+            data: { profileImageUrl }
+        });
+
+        res.json({ profileImageUrl });
+    } catch (error) {
+        next(error);
     }
 })
 

@@ -52,7 +52,7 @@ export const venueAPI = {
         return response.data;
     },
 
-    cancelBooking: async (id: number): Promise<void> => {
-        await api.put(`venues/bookings/${id}/cancel`);
+    cancelBookingWithReason: async (id: number, reason: string): Promise<void> => {
+        await api.put(`venues/bookings/${id}/cancel`, { reason });
     }
 };

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Input } from "./ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "./ui/dialog";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { orderAPI, Order } from "../api/order";
@@ -20,6 +22,7 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -43,6 +46,9 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
     try {
       await orderAPI.updateStatus(orderId, newStatus);
       toast.success(`Order #${orderId} moved to ${newStatus}`);
+      if (selectedOrder && selectedOrder.id === orderId) {
+         setSelectedOrder({ ...selectedOrder, orderStatus: newStatus });
+      }
       fetchOrders(); // Refresh to ensure sync
     } catch (error) {
       toast.error("Failed to update status");
@@ -95,68 +101,6 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
         return <Clock className="w-4 h-4" />;
     }
   };
-
-  const newOrders = filteredOrders.filter(o => ["new", "pending"].includes(o.orderStatus.toLowerCase()));
-  const preparingOrders = filteredOrders.filter(o => ["preparing", "in-progress"].includes(o.orderStatus.toLowerCase()));
-  const readyOrders = filteredOrders.filter(o => ["ready"].includes(o.orderStatus.toLowerCase()));
-
-  const OrderCard = ({ order }: { order: Order }) => (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Order #{order.id}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {new Date(order.orderDate).toLocaleTimeString()}
-            </p>
-          </div>
-          <div className="flex gap-2 flex-col items-end">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              {order.orderType}
-            </Badge>
-            <Badge variant="outline" className={getStatusColor(order.orderStatus)}>
-              {getStatusIcon(order.orderStatus)}
-              <span className="ml-1 capitalize">{order.orderStatus}</span>
-            </Badge>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Items:</p>
-            <ul className="text-sm space-y-1">
-              {order.orderItems?.map((item, idx) => (
-                <li key={idx} className="text-foreground">• {item.menuItem?.name || `Item #${item.menuItemId}`} x{item.quantity}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex justify-between items-center pt-2 border-t">
-            <span className="text-sm text-muted-foreground">Total</span>
-            <span className="text-secondary font-bold">Rs. {order.totalAmount.toLocaleString()}</span>
-          </div>
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Update Status:</p>
-            <Select
-              value={order.orderStatus}
-              onValueChange={(value) => moveOrder(order.id, value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Preparing">Preparing</SelectItem>
-                <SelectItem value="Ready">Ready</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -233,72 +177,144 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
           </CardContent>
         </Card>
 
-        {/* Kanban Board */}
+        {/* Order List Table */}
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
           </div>
         ) : (
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* New Orders Column */}
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-foreground">New Orders</h3>
-                <Badge variant="secondary">{newOrders.length}</Badge>
-              </div>
-              <div className="bg-muted/30 rounded-lg p-4 min-h-[600px]">
-                {newOrders.map(order => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
-                {newOrders.length === 0 && (
-                  <div className="text-center text-muted-foreground py-12">
-                    <Clock className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No new orders</p>
-                  </div>
-                )}
-              </div>
+          <Card>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead className="text-right">Total Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredOrders.map(order => (
+                      <TableRow key={order.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedOrder(order)}>
+                        <TableCell className="font-medium">#{order.id}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span>{new Date(order.orderDate).toLocaleDateString()}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(order.orderDate).toLocaleTimeString()}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {order.orderType}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{order.orderItems?.length || 0} items</TableCell>
+                        <TableCell className="text-right font-medium">Rs. {Number(order.totalAmount).toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={getStatusColor(order.orderStatus)}>
+                            <span className="flex items-center gap-1">
+                              {getStatusIcon(order.orderStatus)}
+                              <span className="capitalize">{order.orderStatus}</span>
+                            </span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedOrder(order); }}>
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-
-            {/* Preparing Column */}
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-foreground">Preparing</h3>
-                <Badge variant="secondary">{preparingOrders.length}</Badge>
-              </div>
-              <div className="bg-muted/30 rounded-lg p-4 min-h-[600px]">
-                {preparingOrders.map(order => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
-                {preparingOrders.length === 0 && (
-                  <div className="text-center text-muted-foreground py-12">
-                    <Package className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No orders in preparation</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Ready Column */}
-            <div>
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-foreground">Ready for Pickup</h3>
-                <Badge variant="secondary">{readyOrders.length}</Badge>
-              </div>
-              <div className="bg-muted/30 rounded-lg p-4 min-h-[600px]">
-                {readyOrders.map(order => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
-                {readyOrders.length === 0 && (
-                  <div className="text-center text-muted-foreground py-12">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No orders ready</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          </Card>
         )}
       </div>
+
+      {/* Order Details Dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>
+              Review and manage Order #{selectedOrder?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-start border-b pb-4">
+                <div>
+                  <h3 className="font-bold text-lg mb-1">{selectedOrder.orderType} Order</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Placed at: {new Date(selectedOrder.orderDate).toLocaleString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className={getStatusColor(selectedOrder.orderStatus)}>
+                   <span className="flex items-center gap-1">
+                     {getStatusIcon(selectedOrder.orderStatus)}
+                     <span className="capitalize text-sm font-semibold">{selectedOrder.orderStatus}</span>
+                   </span>
+                </Badge>
+              </div>
+
+              <div className="space-y-4 border-b pb-4">
+                <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Ordered Items</h4>
+                <div className="space-y-3">
+                  {selectedOrder.orderItems?.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-sm">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium bg-muted w-6 h-6 rounded flex items-center justify-center">{item.quantity}x</span>
+                        <span>{item.menuItem?.name || `Item #${item.menuItemId}`}</span>
+                      </div>
+                      <span className="text-muted-foreground">Rs. {(item.quantity * Number(item.unitPrice || item.menuItem?.price || 0)).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center py-2">
+                <span className="font-bold text-foreground">Total Billable Amount</span>
+                <span className="text-2xl font-bold font-serif text-secondary">Rs. {Number(selectedOrder.totalAmount).toLocaleString()}</span>
+              </div>
+
+              <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+                <p className="font-semibold text-sm">Change Order Status</p>
+                <div className="flex items-center gap-3">
+                  <Select
+                    value={selectedOrder.orderStatus}
+                    onValueChange={(value) => moveOrder(selectedOrder.id, value)}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Preparing">Preparing</SelectItem>
+                      <SelectItem value="Ready">Ready</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

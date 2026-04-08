@@ -207,6 +207,9 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                                     <Button variant="outline" size="icon" onClick={() => openEditDialog(booking)}>
                                                         <Edit className="w-4 h-4" />
                                                     </Button>
+                                                    <Button variant="outline" size="icon" onClick={() => { setSelectedBooking(booking); setIsViewOpen(true); }}>
+                                                        <Eye className="w-4 h-4" />
+                                                    </Button>
                                                     {booking.bookingStatus === 'Pending' && (
                                                         <>
                                                             <Button
@@ -219,7 +222,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                                             <Button
                                                                 size="icon"
                                                                 variant="destructive"
-                                                                onClick={() => handleUpdateStatus(booking.id, 'Cancelled')}
+                                                                onClick={() => { setSelectedBooking(booking); setCancelReason(''); setIsCancelOpen(true); }}
                                                             >
                                                                 <XCircle className="w-4 h-4" />
                                                             </Button>
@@ -230,7 +233,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                                             size="sm"
                                                             variant="outline"
                                                             className="text-red-600 border-red-200 hover:bg-red-50"
-                                                            onClick={() => handleUpdateStatus(booking.id, 'Cancelled')}
+                                                            onClick={() => { setSelectedBooking(booking); setCancelReason(''); setIsCancelOpen(true); }}
                                                         >
                                                             Cancel
                                                         </Button>

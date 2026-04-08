@@ -181,7 +181,7 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
   const handleCashPayment = async () => {
     try {
       await orderAPI.createOrder({
-        orderType: 'Dine-in',
+        orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in',
         items: cart.map(item => ({
           menuItemId: item.id,
           quantity: item.quantity
@@ -209,7 +209,7 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
     if (paymentMethod === 'cash') {
       try {
         await orderAPI.createOrder({
-          orderType: 'Dine-in', // Default for now
+          orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in', 
           items: cart.map(item => ({
             menuItemId: item.id,
             quantity: item.quantity
@@ -248,7 +248,7 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
 
     try {
       await orderAPI.createOrder({
-        orderType: 'Dine-in',
+        orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in',
         items: cart.map(item => ({
           menuItemId: item.id,
           quantity: item.quantity

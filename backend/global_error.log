@@ -1126,3 +1126,2269 @@ Unknown argument `startTime`. Available options are marked with ?.
     at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
     at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
     at async D:\restaurant-management-system\backend\src\routes\venues.js:212:36
+
+[2026-04-06T19:48:29.218Z] 500 ERROR: POST /api/membership/upgrade-request
+TypeError: Cannot read properties of undefined (reading 'map')
+    at D:\restaurant-management-system\backend\src\middleware\validate.js:13:43
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (D:\restaurant-management-system\backend\src\middleware\auth.js:43:9)
+
+[2026-04-06T19:48:34.940Z] 500 ERROR: POST /api/membership/upgrade-request
+TypeError: Cannot read properties of undefined (reading 'map')
+    at D:\restaurant-management-system\backend\src\middleware\validate.js:13:43
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (D:\restaurant-management-system\backend\src\middleware\auth.js:43:9)
+
+[2026-04-06T20:01:53.367Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:02:53.216Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:03:53.230Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:04:53.297Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:05:14.614Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:05:16.428Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:05:31.091Z] 500 ERROR: POST /api/auth/me/picture
+PrismaClientValidationError: 
+Invalid `prisma.member.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:294:29
+
+  291 if (!req.file) throw new BadRequestError('No image uploaded');
+  292 const profileImageUrl = `/uploads/${req.file.filename}`;
+  293 
+→ 294 await prisma.member.update({
+        where: {
+          id: 10
+        },
+        data: {
+          profileImageUrl: "/uploads/1775505931026-141636733.jpg",
+          ~~~~~~~~~~~~~~~
+      ?   fullName?: String | StringFieldUpdateOperationsInput,
+      ?   nic?: String | StringFieldUpdateOperationsInput,
+      ?   address?: String | StringFieldUpdateOperationsInput,
+      ?   phone?: String | StringFieldUpdateOperationsInput,
+      ?   email?: String | StringFieldUpdateOperationsInput,
+      ?   username?: String | StringFieldUpdateOperationsInput,
+      ?   passwordHash?: String | StringFieldUpdateOperationsInput,
+      ?   notificationPreference?: String | StringFieldUpdateOperationsInput,
+      ?   status?: String | StringFieldUpdateOperationsInput,
+      ?   registrationDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   role?: String | StringFieldUpdateOperationsInput,
+      ?   emergencyContact?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   emergencyPhone?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   loyaltyPoints?: Int | IntFieldUpdateOperationsInput,
+      ?   paymentSlipUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   memberships?: UserUpdateManyWithoutMemberNestedInput,
+      ?   membershipPayments?: MembershipPaymentUpdateManyWithoutMemberNestedInput,
+      ?   venueBookings?: VenueBookingUpdateManyWithoutMemberNestedInput,
+      ?   bookingPayments?: BookingPaymentUpdateManyWithoutMemberNestedInput,
+      ?   reservations?: TableReservationUpdateManyWithoutMemberNestedInput,
+      ?   cart?: CartUpdateOneWithoutMemberNestedInput,
+      ?   orders?: OrderUpdateManyWithoutMemberNestedInput,
+      ?   orderPayments?: OrderPaymentUpdateManyWithoutMemberNestedInput,
+      ?   userNotifications?: UserNotificationUpdateManyWithoutMemberNestedInput,
+      ?   stockMovements?: StockMovementUpdateManyWithoutMemberNestedInput,
+      ?   auditLogs?: AuditLogUpdateManyWithoutMemberNestedInput,
+      ?   shifts?: ShiftUpdateManyWithoutStaffNestedInput,
+      ?   venueAssignments?: VenueAssignmentUpdateManyWithoutStaffNestedInput,
+      ?   membershipRequests?: MembershipUpgradeRequestUpdateManyWithoutMemberNestedInput
+        }
+      })
+
+Unknown argument `profileImageUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:294:9
+
+[2026-04-06T20:05:34.304Z] 500 ERROR: POST /api/auth/me/picture
+PrismaClientValidationError: 
+Invalid `prisma.member.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:294:29
+
+  291 if (!req.file) throw new BadRequestError('No image uploaded');
+  292 const profileImageUrl = `/uploads/${req.file.filename}`;
+  293 
+→ 294 await prisma.member.update({
+        where: {
+          id: 10
+        },
+        data: {
+          profileImageUrl: "/uploads/1775505934276-10768259.jpg",
+          ~~~~~~~~~~~~~~~
+      ?   fullName?: String | StringFieldUpdateOperationsInput,
+      ?   nic?: String | StringFieldUpdateOperationsInput,
+      ?   address?: String | StringFieldUpdateOperationsInput,
+      ?   phone?: String | StringFieldUpdateOperationsInput,
+      ?   email?: String | StringFieldUpdateOperationsInput,
+      ?   username?: String | StringFieldUpdateOperationsInput,
+      ?   passwordHash?: String | StringFieldUpdateOperationsInput,
+      ?   notificationPreference?: String | StringFieldUpdateOperationsInput,
+      ?   status?: String | StringFieldUpdateOperationsInput,
+      ?   registrationDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   role?: String | StringFieldUpdateOperationsInput,
+      ?   emergencyContact?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   emergencyPhone?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   loyaltyPoints?: Int | IntFieldUpdateOperationsInput,
+      ?   paymentSlipUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   memberships?: UserUpdateManyWithoutMemberNestedInput,
+      ?   membershipPayments?: MembershipPaymentUpdateManyWithoutMemberNestedInput,
+      ?   venueBookings?: VenueBookingUpdateManyWithoutMemberNestedInput,
+      ?   bookingPayments?: BookingPaymentUpdateManyWithoutMemberNestedInput,
+      ?   reservations?: TableReservationUpdateManyWithoutMemberNestedInput,
+      ?   cart?: CartUpdateOneWithoutMemberNestedInput,
+      ?   orders?: OrderUpdateManyWithoutMemberNestedInput,
+      ?   orderPayments?: OrderPaymentUpdateManyWithoutMemberNestedInput,
+      ?   userNotifications?: UserNotificationUpdateManyWithoutMemberNestedInput,
+      ?   stockMovements?: StockMovementUpdateManyWithoutMemberNestedInput,
+      ?   auditLogs?: AuditLogUpdateManyWithoutMemberNestedInput,
+      ?   shifts?: ShiftUpdateManyWithoutStaffNestedInput,
+      ?   venueAssignments?: VenueAssignmentUpdateManyWithoutStaffNestedInput,
+      ?   membershipRequests?: MembershipUpgradeRequestUpdateManyWithoutMemberNestedInput
+        }
+      })
+
+Unknown argument `profileImageUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:294:9
+
+[2026-04-06T20:05:47.231Z] 500 ERROR: POST /api/auth/me/picture
+PrismaClientValidationError: 
+Invalid `prisma.member.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:294:29
+
+  291 if (!req.file) throw new BadRequestError('No image uploaded');
+  292 const profileImageUrl = `/uploads/${req.file.filename}`;
+  293 
+→ 294 await prisma.member.update({
+        where: {
+          id: 10
+        },
+        data: {
+          profileImageUrl: "/uploads/1775505947197-132920744.png",
+          ~~~~~~~~~~~~~~~
+      ?   fullName?: String | StringFieldUpdateOperationsInput,
+      ?   nic?: String | StringFieldUpdateOperationsInput,
+      ?   address?: String | StringFieldUpdateOperationsInput,
+      ?   phone?: String | StringFieldUpdateOperationsInput,
+      ?   email?: String | StringFieldUpdateOperationsInput,
+      ?   username?: String | StringFieldUpdateOperationsInput,
+      ?   passwordHash?: String | StringFieldUpdateOperationsInput,
+      ?   notificationPreference?: String | StringFieldUpdateOperationsInput,
+      ?   status?: String | StringFieldUpdateOperationsInput,
+      ?   registrationDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   role?: String | StringFieldUpdateOperationsInput,
+      ?   emergencyContact?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   emergencyPhone?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   loyaltyPoints?: Int | IntFieldUpdateOperationsInput,
+      ?   paymentSlipUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   memberships?: UserUpdateManyWithoutMemberNestedInput,
+      ?   membershipPayments?: MembershipPaymentUpdateManyWithoutMemberNestedInput,
+      ?   venueBookings?: VenueBookingUpdateManyWithoutMemberNestedInput,
+      ?   bookingPayments?: BookingPaymentUpdateManyWithoutMemberNestedInput,
+      ?   reservations?: TableReservationUpdateManyWithoutMemberNestedInput,
+      ?   cart?: CartUpdateOneWithoutMemberNestedInput,
+      ?   orders?: OrderUpdateManyWithoutMemberNestedInput,
+      ?   orderPayments?: OrderPaymentUpdateManyWithoutMemberNestedInput,
+      ?   userNotifications?: UserNotificationUpdateManyWithoutMemberNestedInput,
+      ?   stockMovements?: StockMovementUpdateManyWithoutMemberNestedInput,
+      ?   auditLogs?: AuditLogUpdateManyWithoutMemberNestedInput,
+      ?   shifts?: ShiftUpdateManyWithoutStaffNestedInput,
+      ?   venueAssignments?: VenueAssignmentUpdateManyWithoutStaffNestedInput,
+      ?   membershipRequests?: MembershipUpgradeRequestUpdateManyWithoutMemberNestedInput
+        }
+      })
+
+Unknown argument `profileImageUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:294:9
+
+[2026-04-06T20:06:16.182Z] 500 ERROR: POST /api/auth/me/picture
+PrismaClientValidationError: 
+Invalid `prisma.member.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:294:29
+
+  291 if (!req.file) throw new BadRequestError('No image uploaded');
+  292 const profileImageUrl = `/uploads/${req.file.filename}`;
+  293 
+→ 294 await prisma.member.update({
+        where: {
+          id: 10
+        },
+        data: {
+          profileImageUrl: "/uploads/1775505976107-429109371.png",
+          ~~~~~~~~~~~~~~~
+      ?   fullName?: String | StringFieldUpdateOperationsInput,
+      ?   nic?: String | StringFieldUpdateOperationsInput,
+      ?   address?: String | StringFieldUpdateOperationsInput,
+      ?   phone?: String | StringFieldUpdateOperationsInput,
+      ?   email?: String | StringFieldUpdateOperationsInput,
+      ?   username?: String | StringFieldUpdateOperationsInput,
+      ?   passwordHash?: String | StringFieldUpdateOperationsInput,
+      ?   notificationPreference?: String | StringFieldUpdateOperationsInput,
+      ?   status?: String | StringFieldUpdateOperationsInput,
+      ?   registrationDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   role?: String | StringFieldUpdateOperationsInput,
+      ?   emergencyContact?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   emergencyPhone?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   loyaltyPoints?: Int | IntFieldUpdateOperationsInput,
+      ?   paymentSlipUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   memberships?: UserUpdateManyWithoutMemberNestedInput,
+      ?   membershipPayments?: MembershipPaymentUpdateManyWithoutMemberNestedInput,
+      ?   venueBookings?: VenueBookingUpdateManyWithoutMemberNestedInput,
+      ?   bookingPayments?: BookingPaymentUpdateManyWithoutMemberNestedInput,
+      ?   reservations?: TableReservationUpdateManyWithoutMemberNestedInput,
+      ?   cart?: CartUpdateOneWithoutMemberNestedInput,
+      ?   orders?: OrderUpdateManyWithoutMemberNestedInput,
+      ?   orderPayments?: OrderPaymentUpdateManyWithoutMemberNestedInput,
+      ?   userNotifications?: UserNotificationUpdateManyWithoutMemberNestedInput,
+      ?   stockMovements?: StockMovementUpdateManyWithoutMemberNestedInput,
+      ?   auditLogs?: AuditLogUpdateManyWithoutMemberNestedInput,
+      ?   shifts?: ShiftUpdateManyWithoutStaffNestedInput,
+      ?   venueAssignments?: VenueAssignmentUpdateManyWithoutStaffNestedInput,
+      ?   membershipRequests?: MembershipUpgradeRequestUpdateManyWithoutMemberNestedInput
+        }
+      })
+
+Unknown argument `profileImageUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:294:9
+
+[2026-04-06T20:06:17.428Z] 500 ERROR: POST /api/auth/me/picture
+PrismaClientValidationError: 
+Invalid `prisma.member.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:294:29
+
+  291 if (!req.file) throw new BadRequestError('No image uploaded');
+  292 const profileImageUrl = `/uploads/${req.file.filename}`;
+  293 
+→ 294 await prisma.member.update({
+        where: {
+          id: 10
+        },
+        data: {
+          profileImageUrl: "/uploads/1775505977363-249964289.png",
+          ~~~~~~~~~~~~~~~
+      ?   fullName?: String | StringFieldUpdateOperationsInput,
+      ?   nic?: String | StringFieldUpdateOperationsInput,
+      ?   address?: String | StringFieldUpdateOperationsInput,
+      ?   phone?: String | StringFieldUpdateOperationsInput,
+      ?   email?: String | StringFieldUpdateOperationsInput,
+      ?   username?: String | StringFieldUpdateOperationsInput,
+      ?   passwordHash?: String | StringFieldUpdateOperationsInput,
+      ?   notificationPreference?: String | StringFieldUpdateOperationsInput,
+      ?   status?: String | StringFieldUpdateOperationsInput,
+      ?   registrationDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   role?: String | StringFieldUpdateOperationsInput,
+      ?   emergencyContact?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   emergencyPhone?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   loyaltyPoints?: Int | IntFieldUpdateOperationsInput,
+      ?   paymentSlipUrl?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   memberships?: UserUpdateManyWithoutMemberNestedInput,
+      ?   membershipPayments?: MembershipPaymentUpdateManyWithoutMemberNestedInput,
+      ?   venueBookings?: VenueBookingUpdateManyWithoutMemberNestedInput,
+      ?   bookingPayments?: BookingPaymentUpdateManyWithoutMemberNestedInput,
+      ?   reservations?: TableReservationUpdateManyWithoutMemberNestedInput,
+      ?   cart?: CartUpdateOneWithoutMemberNestedInput,
+      ?   orders?: OrderUpdateManyWithoutMemberNestedInput,
+      ?   orderPayments?: OrderPaymentUpdateManyWithoutMemberNestedInput,
+      ?   userNotifications?: UserNotificationUpdateManyWithoutMemberNestedInput,
+      ?   stockMovements?: StockMovementUpdateManyWithoutMemberNestedInput,
+      ?   auditLogs?: AuditLogUpdateManyWithoutMemberNestedInput,
+      ?   shifts?: ShiftUpdateManyWithoutStaffNestedInput,
+      ?   venueAssignments?: VenueAssignmentUpdateManyWithoutStaffNestedInput,
+      ?   membershipRequests?: MembershipUpgradeRequestUpdateManyWithoutMemberNestedInput
+        }
+      })
+
+Unknown argument `profileImageUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:294:9
+
+[2026-04-06T20:06:33.880Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:07:37.110Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:08:11.278Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:08:48.038Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:09:18.185Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:09:48.170Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:10:18.177Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:10:48.171Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:11:18.169Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:11:48.172Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:12:29.265Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:12:53.283Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:13:53.208Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:14:53.201Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:15:53.214Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:16:53.193Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:17:53.182Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:18:53.310Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:19:53.260Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:20:53.181Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:21:53.328Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:22:53.216Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:23:18.735Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:23:47.638Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:23:55.952Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:25:06.606Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:25:12.690Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-06T20:25:42.682Z] 500 ERROR: GET /api/auth/me
+PrismaClientValidationError: 
+Invalid `prisma.member.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\auth.js:196:42
+
+  193 // Get current user profile
+  194 router.get("/me", authenticate, async (req, res, next) => {
+  195     try {
+→ 196         const user = await prisma.member.findUnique({
+                where: {
+                  id: 10
+                },
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  username: true,
+                  phone: true,
+                  address: true,
+                  nic: true,
+                  role: true,
+                  loyaltyPoints: true,
+                  status: true,
+                  registrationDate: true,
+                  notificationPreference: true,
+                  emergencyContact: true,
+                  emergencyPhone: true,
+                  profileImageUrl: true,
+                  ~~~~~~~~~~~~~~~
+              ?   passwordHash?: true,
+              ?   paymentSlipUrl?: true,
+              ?   memberships?: true,
+              ?   membershipPayments?: true,
+              ?   venueBookings?: true,
+              ?   bookingPayments?: true,
+              ?   reservations?: true,
+              ?   cart?: true,
+              ?   orders?: true,
+              ?   orderPayments?: true,
+              ?   userNotifications?: true,
+              ?   stockMovements?: true,
+              ?   auditLogs?: true,
+              ?   shifts?: true,
+              ?   venueAssignments?: true,
+              ?   membershipRequests?: true,
+              ?   _count?: true
+                }
+              })
+
+Unknown field `profileImageUrl` for select statement on model `Member`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22

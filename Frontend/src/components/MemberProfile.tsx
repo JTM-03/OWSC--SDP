@@ -64,6 +64,7 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
     transactionId: '',
     receiptFile: null as File | null,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [memberData, setMemberData] = useState<MemberData>({
     id: "",
     name: "",
@@ -121,7 +122,7 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
           emergencyPhone: user.emergencyPhone || "",
           nic: user.nic || "",
           username: user.username,
-          profileImage: "",
+          profileImage: (user as any).profileImageUrl ? `http://localhost:5000${(user as any).profileImageUrl}` : "",
         };
 
         setMemberData(mappedData);
@@ -277,10 +278,10 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
 
     try {
       setLoading(true);
-      await membershipAPI.requestUpgrade({
-        newPlanId: upgradeRequest.requestedType,
-        reason: ""
-      });
+      await membershipAPI.requestUpgrade(
+        upgradeRequest.requestedType,
+        ""
+      );
 
       setUpgradeDialogOpen(false);
       toast.success("Upgrade request submitted", {
@@ -298,31 +299,44 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
     }
   };
 
-  const handleRequestUpgrade = () => {
+  const handleRequestUpgrade = async () => {
     if (!upgradeRequest.requestedType || !upgradeRequest.reason.trim()) {
       toast.error("Please fill all required fields");
       return;
     }
 
-    setUpgradeStatus('pending');
-    setUpgradeDialogOpen(false);
-    toast.success("Upgrade request submitted", {
-      description: "Your membership upgrade request has been sent to admin for approval",
-    });
-    setUpgradeRequest({
-      currentType: memberData.membershipType,
-      requestedType: "",
-      reason: "",
-    });
-
-    // Simulate admin approval after 3 seconds (in real app, this would be triggered by admin action)
-    setTimeout(() => {
-      setUpgradeStatus('approved');
-      setApprovedUpgradeType(upgradeRequest.requestedType);
-      toast.success("Upgrade Request Approved!", {
-        description: "Your upgrade has been approved. Please check notifications for payment link.",
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/membership/upgrade-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          newPlanId: upgradeRequest.requestedType,
+          reason: upgradeRequest.reason
+        })
       });
-    }, 3000);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit upgrade request');
+      }
+
+      setUpgradeStatus('pending');
+      setUpgradeDialogOpen(false);
+      toast.success("Upgrade request submitted", {
+        description: "Your membership upgrade request has been sent to admin for approval",
+      });
+      setUpgradeRequest({
+        currentType: memberData.membershipType,
+        requestedType: "",
+        reason: "",
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit request");
+    }
   };
 
   // Simulate clicking on notification payment link
@@ -380,11 +394,43 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
     });
   };
 
-  const handleImageUpload = () => {
-    toast.success("Profile image updated", {
-      description: "Your profile picture has been updated successfully",
-    });
-    setImageDialogOpen(false);
+  const handleImageUpload = async () => {
+    if (!selectedImage) {
+      toast.error("Please select an image first");
+      return;
+    }
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/auth/me/picture', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      
+      setMemberData(prev => ({
+        ...prev,
+        profileImage: `http://localhost:5000${data.profileImageUrl}`
+      }));
+      
+      toast.success("Profile image updated", {
+        description: "Your profile picture has been updated successfully",
+      });
+      setImageDialogOpen(false);
+      setSelectedImage(null);
+    } catch (error) {
+      toast.error("Failed to upload profile picture");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -876,20 +922,50 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="py-6">
-              <div className="flex flex-col items-center gap-4">
-                <Avatar className="w-32 h-32">
-                  <AvatarImage src={memberData.profileImage} />
-                  <AvatarFallback className="bg-secondary text-primary text-3xl">
-                    {getInitials(memberData.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <Button variant="outline" className="gap-2">
-                    <Upload className="w-4 h-4" />
-                    Choose Image
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Supported formats: JPG, PNG, GIF (max 5MB)
+              <div className="flex flex-col items-center gap-6">
+                <div className="relative group cursor-pointer outline-none">
+                  <Avatar className="w-32 h-32 border-4 border-muted shadow-md">
+                    <AvatarImage src={selectedImage ? URL.createObjectURL(selectedImage) : (memberData.profileImage || '')} />
+                    <AvatarFallback className="bg-secondary text-primary text-3xl font-serif">
+                      {getInitials(memberData.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label htmlFor="profile-upload" className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
+                    <Upload className="w-6 h-6 mb-1" />
+                    <span className="text-xs font-semibold">Change</span>
+                  </label>
+                </div>
+                <div className="text-center w-full max-w-xs">
+                  <Input 
+                     id="profile-upload"
+                     type="file" 
+                     className="hidden"
+                     accept="image/jpeg, image/png, image/gif" 
+                     onChange={(e) => {
+                       if (e.target.files && e.target.files[0]) {
+                         setSelectedImage(e.target.files[0]);
+                       }
+                     }} 
+                  />
+                  {!selectedImage ? (
+                    <label htmlFor="profile-upload">
+                        <Button variant="outline" className="w-full gap-2" asChild>
+                            <span>
+                                <Upload className="w-4 h-4" />
+                                Browse from Computer
+                            </span>
+                        </Button>
+                    </label>
+                  ) : (
+                    <div className="bg-[#fdf2d0]/20 p-3 rounded-lg border border-[#fdf2d0] flex items-center justify-between">
+                        <span className="text-xs truncate max-w-[150px] font-medium text-[#1a2b3c]">{selectedImage.name}</span>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setSelectedImage(null)}>
+                            Clear
+                        </Button>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-3 uppercase tracking-wider font-semibold">
+                    Supported: JPG, PNG, GIF (max 5MB)
                   </p>
                 </div>
               </div>

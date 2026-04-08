@@ -84,45 +84,63 @@ export function MyOrders({ onBack }: MyOrdersProps) {
   const activeOrders = filteredOrders.filter(o => o.orderStatus !== "Completed" && o.orderStatus !== "Cancelled");
   const completedOrders = filteredOrders.filter(o => o.orderStatus === "Completed" || o.orderStatus === "Cancelled");
 
-  const OrderListItem = ({ order }: { order: APIOrder }) => (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-all hover:border-secondary border border-muted"
-      onClick={() => setSelectedOrder(order)}
-    >
-      <CardContent className="p-5">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h4 className="font-serif text-[#1a2b3c]">Order # {order.id}</h4>
-              <Badge className={`${getStatusColor(order.orderStatus)} border font-medium`}>
-                <span className="flex items-center gap-1">
-                  {getStatusIcon(order.orderStatus)}
-                  {order.orderStatus}
-                </span>
-              </Badge>
+  const OrderListItem = ({ order }: { order: APIOrder }) => {
+    const firstItemName = order.orderItems?.[0]?.menuItem?.name || "Custom Item";
+    const additionalItemsCount = (order.orderItems?.length || 1) - 1;
+
+    return (
+      <Card
+        className="cursor-pointer hover:shadow-xl transition-all hover:-translate-y-1 border-transparent group overflow-hidden bg-white/80 backdrop-blur-sm"
+        onClick={() => setSelectedOrder(order)}
+      >
+        <div className="absolute top-0 left-0 w-1 h-full bg-secondary" />
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-6">
+            <div className="flex items-start gap-4">
+              <div className="hidden md:flex w-16 h-16 rounded-xl bg-orange-50 items-center justify-center text-orange-400 group-hover:scale-110 transition-transform">
+                <UtensilsCrossed className="w-8 h-8" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <h4 className="font-bold text-xl text-[#1a2b3c] tracking-tight">Order #{order.id}</h4>
+                  <Badge className={`${getStatusColor(order.orderStatus)} border-none shadow-sm capitalize px-3 py-0.5 rounded-full`}>
+                    <span className="flex items-center gap-1.5 font-semibold text-xs">
+                      {getStatusIcon(order.orderStatus)}
+                      {order.orderStatus}
+                    </span>
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground/80 mb-3 flex items-center gap-1.5 font-medium">
+                  <Clock className="w-4 h-4 text-secondary" /> {new Date(order.orderDate).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-secondary/20 text-secondary bg-secondary/5 font-semibold">
+                    {order.orderType}
+                  </Badge>
+                  <p className="text-sm font-medium text-[#1a2b3c] flex items-center gap-1">
+                    <Package className="w-4 h-4 text-muted-foreground" />
+                    {firstItemName} {additionalItemsCount > 0 && <span className="text-muted-foreground">+{additionalItemsCount} more</span>}
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <Clock className="w-3 h-3" /> {new Date(order.orderDate).toLocaleString()}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="bg-[#fdf2d0] text-[#1a2b3c] hover:bg-[#fdf2d0]">
-                {order.orderType}
-              </Badge>
-              <Badge variant="outline" className="text-muted-foreground">
-                {order.orderItems?.length || 0} items
-              </Badge>
+            <div className="text-left md:text-right flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end w-full md:w-auto border-t md:border-t-0 md:border-l border-muted pt-4 md:pt-0 md:pl-6 pl-0">
+              <div className="flex flex-col">
+                <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold mb-1">Total Bill</span>
+                <p className="text-3xl font-black text-[#1a2b3c] font-sans">
+                  <span className="text-sm font-bold text-muted-foreground align-top mr-1">Rs.</span>
+                  {Number(order.totalAmount).toLocaleString()}
+                </p>
+              </div>
+              <div className="flex items-center justify-end text-sm text-secondary font-bold mt-2 group-hover:pr-2 transition-all">
+                View Details <ChevronRight className="w-5 h-5 ml-1" />
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-secondary">Rs. {order.totalAmount.toLocaleString()}</p>
-            <div className="flex items-center justify-end text-xs text-muted-foreground mt-1">
-              Details <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -161,12 +179,13 @@ export function MyOrders({ onBack }: MyOrdersProps) {
               <CardContent className="pt-6 space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="search" className="text-xs uppercase tracking-wider font-bold text-muted-foreground">Search</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <div className="relative flex items-center">
+                    <Search className="absolute left-3 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="search"
                       placeholder="Order ID or Item..."
-                      className="pl-9 h-11"
+                      className="h-11 w-full border-muted focus-visible:ring-secondary/30"
+                      style={{ paddingLeft: '2.5rem' }}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -312,7 +331,7 @@ export function MyOrders({ onBack }: MyOrdersProps) {
                       <div key={index} className="flex items-center justify-between p-4 bg-white border border-muted rounded-xl hover:border-secondary transition-colors">
                         <div className="flex flex-col">
                           <span className="font-medium text-[#1a2b3c]">{item.menuItem?.name || 'Manual Item'}</span>
-                          <span className="text-xs text-muted-foreground font-mono">QTY: {item.quantity} × Rs. {item.unitPrice.toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground font-mono">QTY: {item.quantity} × Rs. {Number(item.unitPrice).toLocaleString()}</span>
                         </div>
                         <span className="font-bold text-[#1a2b3c]">Rs. {(item.quantity * item.unitPrice).toLocaleString()}</span>
                       </div>
@@ -326,7 +345,7 @@ export function MyOrders({ onBack }: MyOrdersProps) {
                     <p className="text-xs uppercase tracking-widest font-bold opacity-60">Total Billable Amount</p>
                     <p className="text-sm font-medium">{selectedOrder.orderType} Experience</p>
                   </div>
-                  <p className="text-3xl font-bold font-serif text-secondary">Rs. {selectedOrder.totalAmount.toLocaleString()}</p>
+                  <p className="text-3xl font-bold font-serif text-secondary">Rs. {Number(selectedOrder.totalAmount).toLocaleString()}</p>
                 </div>
 
                 <div className="text-center pt-4">
