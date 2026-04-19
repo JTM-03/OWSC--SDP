@@ -25,7 +25,10 @@ export interface Delivery {
 export const deliveryAPI = {
     getAll: async () => {
         const response = await api.get('/deliveries');
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        return [];
     },
 
     create: async (data: { supplierId: number; items: { productId: number; quantity: number }[] }) => {

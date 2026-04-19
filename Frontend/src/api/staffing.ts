@@ -23,10 +23,31 @@ export interface CreateAssignmentData {
     role?: string;
 }
 
+export interface UpdateAssignmentData {
+    venueId?: number;
+    staffId?: number;
+    assignmentDate?: string;
+    startTime?: string;
+    endTime?: string;
+    eventName?: string;
+    role?: string;
+    status?: string;
+}
+
+export interface BusyStaffInfo {
+    eventName: string;
+    venueName: string;
+    startTime: string;
+    endTime: string;
+}
+
 export const staffingAPI = {
     getByVenue: async (venueId: number): Promise<VenueAssignment[]> => {
         const response = await api.get(`staffing/venue/${venueId}`);
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        return [];
     },
 
     create: async (data: CreateAssignmentData): Promise<{ message: string; assignment: any }> => {
@@ -34,8 +55,18 @@ export const staffingAPI = {
         return response.data;
     },
 
+    update: async (id: number, data: UpdateAssignmentData): Promise<{ message: string; assignment: any }> => {
+        const response = await api.put(`staffing/${id}`, data);
+        return response.data;
+    },
+
     delete: async (id: number): Promise<{ message: string }> => {
         const response = await api.delete(`staffing/${id}`);
         return response.data;
+    },
+
+    checkAvailability: async (date: string, startTime: string, endTime: string): Promise<Record<string, BusyStaffInfo>> => {
+        const response = await api.get(`staffing/check-availability?date=${date}&startTime=${startTime}&endTime=${endTime}`);
+        return response.data.busyStaff;
     }
 };

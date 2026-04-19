@@ -5,8 +5,86 @@ const { orderSchema } = require("../validation/schemas")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
 const { isRestrictedDate } = require("../utils/dateRestriction")
+const { notifyNewOrder, notifyOrderStatusUpdate } = require("../services/socketService")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /orders:
+ *   get:
+ *     summary: List all orders (Admin/Staff only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of orders (active + last 24h completed)
+ *   post:
+ *     summary: Place a new food order
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [orderType, items]
+ *             properties:
+ *               orderType:
+ *                 type: string
+ *                 enum: [Dine-in, Takeaway]
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     menuItemId: { type: integer, example: 1 }
+ *                     quantity:   { type: integer, example: 2 }
+ *     responses:
+ *       201:
+ *         description: Order placed
+ *       400:
+ *         description: Restricted date or unavailable item
+ *
+ * /orders/my:
+ *   get:
+ *     summary: Get current user's orders
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User's orders
+ *
+ * /orders/{id}/status:
+ *   put:
+ *     summary: Update order status (Admin/Staff only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status: { type: string, enum: [Pending, Preparing, Ready, Completed, Cancelled] }
+ *     responses:
+ *       200:
+ *         description: Order status updated
+ *       404:
+ *         description: Order not found
+ */
 
 // GET /api/orders - List all orders (Staff/Admin only)
 router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
@@ -27,6 +105,9 @@ router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, ne
             include: {
                 member: {
                     select: { id: true, fullName: true, email: true }
+                },
+                staff: {
+                    select: { id: true, fullName: true, username: true }
                 },
                 orderItems: {
                     include: { menuItem: true }
@@ -67,42 +148,104 @@ router.post("/", authenticate, validate(orderSchema), async (req, res, next) => 
             throw new BadRequestError('Cannot place food orders on Sundays or Poya days.');
         }
 
-        const { orderType, items } = req.validatedData
+        const { orderType, items, serviceFee, paymentMethod } = req.validatedData
         const memberId = req.user.id
 
-        // Calculate total amount and verify items
-        let totalAmount = 0
-        const orderItemsData = []
+        // ── Rule 1: Active membership required ──────────────────────────────
+        const member = await prisma.member.findUnique({
+            where: { id: memberId },
+            select: {
+                id: true, fullName: true, email: true,
+                status: true, noShowCount: true,
+                memberships: {
+                    where: { status: 'Active', endDate: { gte: new Date() } },
+                    take: 1,
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!member) throw new NotFoundError('Member not found');
+
+        const hasActiveMembership = member.memberships.length > 0;
+
+        if (!hasActiveMembership) {
+            throw new BadRequestError(
+                'Your membership is not active. Please renew your membership before placing orders.'
+            );
+        }
+
+        // ── Rule 2: Validate items, quantities, and per-item max limits ──────
+        let subtotalAmount = 0;
+        const orderItemsData = [];
 
         for (const item of items) {
             const menuItem = await prisma.menuItem.findUnique({
                 where: { id: item.menuItemId }
-            })
+            });
 
             if (!menuItem) {
-                throw new NotFoundError(`Menu item with ID ${item.menuItemId} not found`)
+                throw new NotFoundError(`Menu item with ID ${item.menuItemId} not found`);
             }
 
             if (menuItem.availabilityStatus === 'Unavailable') {
-                throw new BadRequestError(`Menu item ${menuItem.name} is currently unavailable`)
+                throw new BadRequestError(`"${menuItem.name}" is currently unavailable`);
             }
 
-            const itemTotal = menuItem.price * item.quantity
-            totalAmount += itemTotal
+            // Hard per-item max (stored on the menu item, default 20)
+            const maxAllowed = menuItem.maxPerOrder ?? 20;
+            if (item.quantity > maxAllowed) {
+                throw new BadRequestError(
+                    `Maximum ${maxAllowed} units allowed per order for "${menuItem.name}". ` +
+                    `Please split into multiple orders or contact a manager.`
+                );
+            }
+
+            const itemTotal = Number(menuItem.price) * item.quantity;
+            subtotalAmount += itemTotal;
 
             orderItemsData.push({
                 menuItemId: item.menuItemId,
                 quantity: item.quantity,
                 unitPrice: menuItem.price
-            })
+            });
         }
 
-        // Create order with transactions
+        const serviceFeeAmount = serviceFee
+            ? parseFloat(serviceFee)
+            : subtotalAmount * 0.10;
+        const totalAmount = subtotalAmount + serviceFeeAmount;
+
+        // ── Rule 3: Cash-on-grab eligibility ────────────────────────────────
+        const CASH_ORDER_CAP = 5000; // Rs. 5,000 hard limit for cash orders
+
+        if (paymentMethod === 'cash') {
+            // 3a. Order value cap
+            if (totalAmount > CASH_ORDER_CAP) {
+                throw new BadRequestError(
+                    `Cash payment is only available for orders under Rs. ${CASH_ORDER_CAP.toLocaleString()}. ` +
+                    `Please use a digital payment method for this order.`
+                );
+            }
+
+            // 3b. No-show history — permanently disable cash after 1 no-show
+            if (member.noShowCount >= 1) {
+                throw new BadRequestError(
+                    'Cash payment has been disabled for your account due to a previous unpaid order. ' +
+                    'Please use a digital payment method.'
+                );
+            }
+        }
+
+        // ── Create order ─────────────────────────────────────────────────────
         const order = await prisma.$transaction(async (tx) => {
             const newOrder = await tx.order.create({
                 data: {
                     memberId,
+                    staffId: orderType === 'Dine-in' ? req.user.id : null,
                     orderType,
+                    subtotalAmount,
+                    serviceFee: serviceFeeAmount,
                     totalAmount,
                     orderStatus: 'Pending',
                     orderItems: {
@@ -110,22 +253,25 @@ router.post("/", authenticate, validate(orderSchema), async (req, res, next) => 
                     }
                 },
                 include: {
-                    orderItems: {
-                        include: { menuItem: true }
-                    }
+                    orderItems: { include: { menuItem: true } },
+                    staff:  { select: { id: true, fullName: true, username: true } },
+                    member: { select: { id: true, fullName: true, email: true } }
                 }
-            })
-            return newOrder
-        })
+            });
+            return newOrder;
+        });
+
+        // Emit real-time notification to admin and staff
+        notifyNewOrder(order);
 
         res.status(201).json({
             message: 'Order placed successfully',
             order
-        })
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-})
+});
 
 // PUT /api/orders/:id/status - Update order status (Staff/Admin only)
 router.put("/:id/status", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
@@ -137,15 +283,42 @@ router.put("/:id/status", authenticate, requireRole('admin', 'staff'), async (re
             throw new BadRequestError('Status is required')
         }
 
+        // Get the current order to know the previous status
+        const currentOrder = await prisma.order.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!currentOrder) {
+            throw new NotFoundError('Order not found');
+        }
+
+        const previousStatus = currentOrder.orderStatus;
+
         const order = await prisma.order.update({
             where: { id: parseInt(id) },
             data: { orderStatus: status },
             include: {
-                orderItems: {
-                    include: { menuItem: true }
-                }
+                orderItems: { include: { menuItem: true } },
+                member: { select: { id: true, fullName: true, email: true } }
             }
-        })
+        });
+
+        // ── No-show tracking ─────────────────────────────────────────────────
+        // If a Pending order is cancelled by staff, it means the member placed
+        // a cash order and didn't show up — increment their no-show counter.
+        if (
+            status === 'Cancelled' &&
+            previousStatus === 'Pending' &&
+            order.memberId
+        ) {
+            await prisma.member.update({
+                where: { id: order.memberId },
+                data: { noShowCount: { increment: 1 } }
+            }).catch(err => console.error('Failed to increment noShowCount:', err.message));
+        }
+
+        // Emit real-time notification for status update
+        notifyOrderStatusUpdate(order, previousStatus);
 
         res.json({
             message: 'Order status updated successfully',

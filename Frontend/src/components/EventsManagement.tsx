@@ -52,7 +52,8 @@ export function EventsManagement({ onBack }: EventsManagementProps) {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventsAPI.getAllEvents();
+      const raw = await eventsAPI.getAllEvents();
+      const data = Array.isArray(raw) ? raw : [];
       // Map API data to UI Event interface
       const mappedEvents: Event[] = data.map((e: any) => ({
         ...e,

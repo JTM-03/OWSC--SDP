@@ -2,18 +2,188 @@ const express = require("express")
 const prisma = require("../lib/prisma")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { parsePagination, paginationMeta } = require("../utils/pagination")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /inventory:
+ *   get:
+ *     summary: List all inventory items with pagination (Admin/Staff)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Filter by product name
+ *       - in: query
+ *         name: lowStock
+ *         schema: { type: boolean }
+ *         description: If true, return only low-stock items
+ *     responses:
+ *       200:
+ *         description: Paginated inventory list
+ *
+ * /inventory/deliveries:
+ *   get:
+ *     summary: List recent stock deliveries with pagination (Admin/Staff)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: Paginated deliveries
+ *
+ * /inventory/returns:
+ *   get:
+ *     summary: List return records with pagination (Admin/Staff)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: Paginated returns
+ *
+ * /inventory/product:
+ *   post:
+ *     summary: Create a new inventory product (Admin)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productName, category, unit]
+ *             properties:
+ *               productName:     { type: string }
+ *               category:        { type: string }
+ *               unit:            { type: string }
+ *               reorderLevel:    { type: number }
+ *               initialQuantity: { type: number }
+ *     responses:
+ *       201:
+ *         description: Product created
+ *
+ * /inventory/update:
+ *   post:
+ *     summary: Record a stock delivery or usage (Admin/Staff)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, quantity, type]
+ *             properties:
+ *               productId:  { type: integer }
+ *               quantity:   { type: number }
+ *               supplierId: { type: integer }
+ *               type:       { type: string, enum: [delivery, used] }
+ *               reason:     { type: string }
+ *     responses:
+ *       200:
+ *         description: Stock updated
+ *
+ * /inventory/return:
+ *   post:
+ *     summary: Record a supplier return (Admin)
+ *     tags: [Inventory]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, supplierId, quantity, reason]
+ *             properties:
+ *               productId:  { type: integer }
+ *               supplierId: { type: integer }
+ *               quantity:   { type: number }
+ *               reason:     { type: string }
+ *     responses:
+ *       201:
+ *         description: Return recorded
+ */
 
 // GET /api/inventory - List all inventory items
 router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
-        const inventory = await prisma.inventory.findMany({
-            include: {
-                product: true
+        const { skip, take, page, limit } = parsePagination(req.query)
+        const { search, lowStock } = req.query
+
+        const where = {
+            ...(search && {
+                product: { productName: { contains: search, mode: 'insensitive' } }
+            })
+        }
+
+        const [inventory, total] = await Promise.all([
+            prisma.inventory.findMany({
+                where,
+                include: {
+                    product: {
+                        include: {
+                            // Get the most recent delivery item to derive unit cost
+                            deliveryItems: {
+                                orderBy: { id: 'desc' },
+                                take: 1,
+                                select: { unitPrice: true }
+                            }
+                        }
+                    }
+                },
+                skip,
+                take,
+            }),
+            prisma.inventory.count({ where })
+        ])
+
+        // Optional low-stock filter (done in JS since Prisma can't compare two columns)
+        const filtered = lowStock === 'true'
+            ? inventory.filter(i => parseFloat(i.currentQuantity) <= parseFloat(i.reorderLevel))
+            : inventory
+
+        // Attach unitCost from the latest delivery so the frontend can calculate total value
+        const data = filtered.map(item => ({
+            ...item,
+            product: {
+                ...item.product,
+                unitCost: parseFloat(item.product.deliveryItems?.[0]?.unitPrice ?? 0)
             }
-        })
-        res.json(inventory)
+        }))
+
+        res.json({ data, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }
@@ -22,30 +192,31 @@ router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, ne
 // GET /api/inventory/deliveries - List recent deliveries (Stock Batches)
 router.get("/deliveries", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
-        const deliveries = await prisma.stockBatch.findMany({
-            include: {
-                product: {
-                    select: { productName: true, unit: true }
-                },
-                supplier: {
-                    select: { name: true }
-                }
-            },
-            orderBy: { supplyDate: 'desc' },
-            take: 50
-        })
+        const { skip, take, page, limit } = parsePagination(req.query)
 
-        // Transform for frontend
+        const [deliveries, total] = await Promise.all([
+            prisma.stockBatch.findMany({
+                include: {
+                    product: { select: { productName: true, unit: true } },
+                    supplier: { select: { name: true } }
+                },
+                orderBy: { supplyDate: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.stockBatch.count()
+        ])
+
         const formatted = deliveries.map(d => ({
             id: d.id,
             supplier: d.supplier?.name || 'Unknown',
             items: `${d.product.productName} (${d.quantity} ${d.product.unit})`,
             date: new Date(d.supplyDate).toLocaleDateString(),
-            status: 'Received', // All recorded batches are received
+            status: 'Received',
             invoiceNo: `BATCH-${d.id}`
         }))
 
-        res.json(formatted)
+        res.json({ data: formatted, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }
@@ -54,7 +225,7 @@ router.get("/deliveries", authenticate, requireRole('admin', 'staff'), async (re
 // POST /api/inventory/product - Create new inventory item (Product + Initial Stock)
 router.post("/product", authenticate, requireRole('admin'), async (req, res, next) => {
     try {
-        const { productName, category, unit, reorderLevel, initialQuantity } = req.body
+        const { productName, category, unit, reorderLevel, initialQuantity, supplierId } = req.body
 
         if (!productName || !category || !unit) {
             throw new BadRequestError('Product name, category, and unit are required')
@@ -63,11 +234,7 @@ router.post("/product", authenticate, requireRole('admin'), async (req, res, nex
         const result = await prisma.$transaction(async (tx) => {
             // 1. Create Product
             const product = await tx.product.create({
-                data: {
-                    productName,
-                    category,
-                    unit
-                }
+                data: { productName, category, unit }
             })
 
             // 2. Create Inventory Record
@@ -79,18 +246,41 @@ router.post("/product", authenticate, requireRole('admin'), async (req, res, nex
                 }
             })
 
-            // 3. Record Initial Stock Batch (Opening Stock)
-            if (initialQuantity > 0) {
-                await tx.stockBatch.create({
-                    data: {
-                        productId: product.id,
-                        quantity: parseFloat(initialQuantity),
-                        supplyDate: new Date(),
-                        supplierId: 1 // Default supplier for now
-                    }
-                })
+            // 3. Record Initial Stock Batch only if we have a valid supplier
+            if (parseFloat(initialQuantity) > 0) {
+                // Use the provided supplierId, or fall back to the first available supplier
+                let resolvedSupplierId = supplierId ? parseInt(supplierId) : null
 
-                // 4. Record Stock Movement
+                if (resolvedSupplierId) {
+                    // Validate the provided supplierId exists
+                    const supplierExists = await tx.supplier.findUnique({
+                        where: { id: resolvedSupplierId },
+                        select: { id: true }
+                    })
+                    if (!supplierExists) resolvedSupplierId = null
+                }
+
+                if (!resolvedSupplierId) {
+                    // Fall back to first available supplier
+                    const firstSupplier = await tx.supplier.findFirst({
+                        select: { id: true },
+                        orderBy: { id: 'asc' }
+                    })
+                    resolvedSupplierId = firstSupplier?.id ?? null
+                }
+
+                if (resolvedSupplierId) {
+                    await tx.stockBatch.create({
+                        data: {
+                            productId: product.id,
+                            quantity: parseFloat(initialQuantity),
+                            supplyDate: new Date(),
+                            supplierId: resolvedSupplierId
+                        }
+                    })
+                }
+
+                // 4. Always record the Stock Movement regardless of supplier
                 await tx.stockMovement.create({
                     data: {
                         productId: product.id,
@@ -115,13 +305,13 @@ router.post("/product", authenticate, requireRole('admin'), async (req, res, nex
     }
 })
 
-// POST /api/inventory/delivery - Record a delivery (increases stock)
-router.post("/delivery", authenticate, requireRole('admin'), async (req, res, next) => {
+// POST /api/inventory/update - Record stock update (delivery or usage)
+router.post("/update", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
-        const { productId, quantity, supplierId } = req.body
+        const { productId, quantity, supplierId, type, reason } = req.body
 
-        if (!productId || !quantity) {
-            throw new BadRequestError('Product ID and quantity are required')
+        if (!productId || !quantity || !type) {
+            throw new BadRequestError('Product ID, quantity, and type (delivery/used) are required')
         }
 
         const product = await prisma.product.findUnique({ where: { id: parseInt(productId) } })
@@ -129,35 +319,61 @@ router.post("/delivery", authenticate, requireRole('admin'), async (req, res, ne
             throw new NotFoundError('Product not found')
         }
 
-        // Use transaction to update inventory and create batch/movement
+        const updateQty = parseFloat(quantity)
+        if (updateQty <= 0) throw new BadRequestError('Quantity must be positive')
+
+        // Use transaction to update inventory and create movement
         const result = await prisma.$transaction(async (tx) => {
-            // Update or create inventory
+            const movementType = type === 'delivery' ? 'IN' : 'OUT'
+            
+            // 1. Update inventory
             const inventory = await tx.inventory.upsert({
                 where: { productId: product.id },
-                update: { currentQuantity: { increment: parseFloat(quantity) } },
-                create: { productId: product.id, currentQuantity: parseFloat(quantity), reorderLevel: 10 }
-            })
-
-            // Record stock batch
-            await tx.stockBatch.create({
-                data: {
-                    productId: product.id,
-                    quantity: parseFloat(quantity),
-                    supplyDate: new Date(),
-                    supplierId: supplierId || 1 // Default supplier if not provided
+                update: { 
+                    currentQuantity: movementType === 'IN' 
+                        ? { increment: updateQty } 
+                        : { decrement: updateQty } 
+                },
+                create: { 
+                    productId: product.id, 
+                    currentQuantity: movementType === 'IN' ? updateQty : 0, 
+                    reorderLevel: 10 
                 }
             })
 
-            // Record movement
+            if (inventory.currentQuantity < 0) {
+                throw new BadRequestError('Insufficient stock for this operation')
+            }
+
+            // 2. Record stock batch (only for deliveries)
+            if (movementType === 'IN') {
+                const resolvedSupplierId = parseInt(supplierId) || null
+                // Only create batch if we have a valid supplier
+                if (resolvedSupplierId) {
+                    const supplierExists = await tx.supplier.findUnique({ where: { id: resolvedSupplierId }, select: { id: true } })
+                    if (supplierExists) {
+                        await tx.stockBatch.create({
+                            data: {
+                                productId: product.id,
+                                quantity: updateQty,
+                                supplyDate: new Date(),
+                                supplierId: resolvedSupplierId
+                            }
+                        })
+                    }
+                }
+            }
+
+            // 3. Record movement
             await tx.stockMovement.create({
                 data: {
                     productId: product.id,
-                    movementType: 'IN',
-                    quantity: parseFloat(quantity),
-                    referenceType: 'Delivery',
-                    referenceId: 0, // Placeholder
+                    movementType: movementType,
+                    quantity: updateQty,
+                    referenceType: type === 'delivery' ? 'Delivery' : 'Usage',
+                    referenceId: 0,
                     movementDate: new Date(),
-                    reason: 'Bulk delivery recording'
+                    reason: reason || (type === 'delivery' ? 'Stock delivery' : 'Daily usage')
                 }
             })
 
@@ -165,7 +381,7 @@ router.post("/delivery", authenticate, requireRole('admin'), async (req, res, ne
         })
 
         res.json({
-            message: 'Delivery recorded successfully',
+            message: `Stock ${type === 'delivery' ? 'increased' : 'decreased'} successfully`,
             inventory: result
         })
     } catch (error) {
@@ -268,17 +484,24 @@ router.post("/return", authenticate, requireRole('admin'), async (req, res, next
 // GET /api/inventory/returns - List return records
 router.get("/returns", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
-        const returns = await prisma.return.findMany({
-            include: {
-                batch: {
-                    include: {
-                        product: { select: { productName: true, unit: true } },
-                        supplier: { select: { name: true } }
+        const { skip, take, page, limit } = parsePagination(req.query)
+
+        const [returns, total] = await Promise.all([
+            prisma.return.findMany({
+                include: {
+                    batch: {
+                        include: {
+                            product: { select: { productName: true, unit: true } },
+                            supplier: { select: { name: true } }
+                        }
                     }
-                }
-            },
-            orderBy: { returnDate: 'desc' }
-        })
+                },
+                orderBy: { returnDate: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.return.count()
+        ])
 
         const formatted = returns.map(r => ({
             id: r.id,
@@ -291,7 +514,7 @@ router.get("/returns", authenticate, requireRole('admin', 'staff'), async (req, 
             status: r.status
         }))
 
-        res.json(formatted)
+        res.json({ data: formatted, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }

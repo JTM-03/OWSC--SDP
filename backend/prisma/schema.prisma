@@ -29,8 +29,11 @@ model Member {
   emergencyContact       String?   @map("EmergencyContact")
   emergencyPhone         String?   @map("EmergencyPhone")
   loyaltyPoints          Int       @default(0) @map("LoyaltyPoints")
+  noShowCount            Int       @default(0) @map("NoShowCount")
   paymentSlipUrl         String?   @map("PaymentSlipUrl")
   profileImageUrl        String?   @map("ProfileImageUrl")
+  dateOfBirth            DateTime? @map("DateOfBirth")
+  nicImageUrl            String?   @map("NicImageUrl")
 
   // Relationships
   memberships          User[]
@@ -40,6 +43,7 @@ model Member {
   reservations         TableReservation[]
   cart                 Cart?
   orders               Order[]
+  staffOrders          Order[]   @relation("OrderStaff")
   orderPayments        OrderPayment[]
   userNotifications    UserNotification[]
   stockMovements       StockMovement[]
@@ -78,6 +82,7 @@ model MembershipPayment {
   transactionId String?  @unique @map("TransactionID")
   paymentDate   DateTime @default(now()) @map("PaymentDate")
   paymentStatus String   @default("Pending") @map("PaymentStatus")
+  receiptUrl    String?  @map("ReceiptUrl") // URL of uploaded payment receipt
 
   // Relationships
   membership    User @relation(fields: [membershipId], references: [id])
@@ -114,10 +119,12 @@ model VenueBooking {
   venueId            Int      @map("VenueID")
   bookingDate        DateTime @map("BookingDate") // Date
   timeSlot           String   @map("TimeSlot")
-  bookingStatus      String   @default("Pending") @map("BookingStatus")
+  bookingStatus      String   @default("Pending") @map("BookingStatus") // Pending, Confirmed, Cancelled, Completed
   cancellationReason String?  @map("CancellationReason")
+  cancelledBy        Int?     @map("CancelledBy") // ID of member/admin who cancelled
   purpose            String?  @map("Purpose")
   createdDate        DateTime @default(now()) @map("CreatedDate")
+  updatedDate        DateTime @updatedAt @map("UpdatedDate") // Track updates for calendar
 
   // Relationships
   member        Member          @relation(fields: [memberId], references: [id])
@@ -138,6 +145,7 @@ model BookingPayment {
   transactionId String?  @unique @map("TransactionID")
   paymentDate   DateTime @default(now()) @map("PaymentDate")
   paymentStatus String   @default("Pending") @map("PaymentStatus")
+  receiptUrl    String?  @map("ReceiptUrl") // URL/path of uploaded payment receipt
 
   // Relationships
   booking       VenueBooking @relation(fields: [bookingId], references: [id])
@@ -212,6 +220,7 @@ model MenuItem {
   isVegetarian       Boolean  @default(false) @map("IsVegetarian")
   isSpicy            Boolean  @default(false) @map("IsSpicy")
   prepTime           Int?     @map("PrepTime")
+  maxPerOrder        Int      @default(20) @map("MaxPerOrder")
 
   // Relationships
   cartItems          CartItem[]
@@ -281,15 +290,19 @@ model CartItemModifier {
 model Order {
   id                  Int      @id @default(autoincrement()) @map("OrderID")
   memberId            Int      @map("MemberID")
+  staffId             Int?     @map("StaffID")
   restaurantTableId   Int?     @map("RestaurantTableID")
   orderType           String   @map("OrderType")
   orderDate           DateTime @default(now()) @map("OrderDate")
   orderStatus         String   @default("Pending") @map("OrderStatus")
+  subtotalAmount      Decimal @db.Decimal(10, 2) @default(0) @map("SubtotalAmount")
+  serviceFee          Decimal @db.Decimal(10, 2) @default(0) @map("ServiceFee")
   totalAmount         Decimal @db.Decimal(10, 2)@map("TotalAmount")
   specialInstructions String?  @map("SpecialInstructions")
 
   // Relationships
   member              Member           @relation(fields: [memberId], references: [id])
+  staff               Member?          @relation("OrderStaff", fields: [staffId], references: [id])
   restaurantTable     RestaurantTable? @relation(fields: [restaurantTableId], references: [id])
   orderItems          OrderItem[]
   payments            OrderPayment[]
@@ -335,6 +348,7 @@ model OrderPayment {
   transactionId String?  @unique @map("TransactionID")
   paymentDate   DateTime @default(now()) @map("PaymentDate")
   paymentStatus String   @default("Pending") @map("PaymentStatus")
+  receiptUrl    String?  @map("ReceiptUrl") // URL of uploaded payment receipt
 
   // Relationships
   order         Order    @relation(fields: [orderId], references: [id])

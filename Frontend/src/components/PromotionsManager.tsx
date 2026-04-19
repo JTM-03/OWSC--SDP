@@ -32,7 +32,7 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
   const fetchPromotions = async () => {
     try {
       const data = await promotionsAPI.getAll();
-      setPromotions(data);
+      setPromotions(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Failed to load promotions");
     } finally {
@@ -45,10 +45,12 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
   }, []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<APIPromotion | null>(null);
   const [newPromotion, setNewPromotion] = useState({
     title: "",
     description: "",
     validUntil: "",
+    isActive: true,
     sendEmail: true,
     sendSMS: false,
     sendPush: true,
@@ -61,42 +63,69 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
     }
 
     try {
-      await promotionsAPI.create({
-        title: newPromotion.title,
-        description: newPromotion.description,
-        validUntil: new Date(newPromotion.validUntil).toISOString(),
-        isActive: true
-      });
+      if (editingPromotion) {
+        await promotionsAPI.update(editingPromotion.id, {
+          title: newPromotion.title,
+          description: newPromotion.description,
+          validUntil: new Date(newPromotion.validUntil).toISOString(),
+          isActive: newPromotion.isActive
+        });
+        toast.success("Promotion updated successfully!");
+      } else {
+        await promotionsAPI.create({
+          title: newPromotion.title,
+          description: newPromotion.description,
+          validUntil: new Date(newPromotion.validUntil).toISOString(),
+          isActive: true
+        });
 
-      const channels = [];
-      if (newPromotion.sendEmail) channels.push("email");
-      if (newPromotion.sendSMS) channels.push("SMS");
-      if (newPromotion.sendPush) channels.push("push notification");
+        const channels = [];
+        if (newPromotion.sendEmail) channels.push("email");
+        if (newPromotion.sendSMS) channels.push("SMS");
+        if (newPromotion.sendPush) channels.push("push notification");
 
-      toast.success(`Promotion created and sent via ${channels.join(", ")} to all members!`);
+        toast.success(`Promotion created and sent via ${channels.join(", ")} to all members!`);
+      }
 
       setIsDialogOpen(false);
+      setEditingPromotion(null);
       setNewPromotion({
         title: "",
         description: "",
         validUntil: "",
+        isActive: true,
         sendEmail: true,
         sendSMS: false,
         sendPush: true,
       });
       fetchPromotions();
     } catch (error) {
-      toast.error("Failed to create promotion");
+      toast.error(editingPromotion ? "Failed to update promotion" : "Failed to create promotion");
     }
   };
 
+  const handleEditClick = (promotion: APIPromotion) => {
+    setEditingPromotion(promotion);
+    setNewPromotion({
+      title: promotion.title,
+      description: promotion.description,
+      validUntil: new Date(promotion.validUntil).toISOString().split('T')[0],
+      isActive: promotion.isActive,
+      sendEmail: false,
+      sendSMS: false,
+      sendPush: false,
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleDeletePromotion = async (id: number) => {
+    if (!confirm("Are you sure you want to remove this promotion? It will no longer be visible to members.")) return;
     try {
       await promotionsAPI.delete(id);
-      toast.success("Promotion deleted successfully");
+      toast.success("Promotion removed from web successfully");
       fetchPromotions();
     } catch (error) {
-      toast.error("Failed to delete promotion");
+      toast.error("Failed to remove promotion");
     }
   };
 
@@ -122,18 +151,43 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
               </div>
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setEditingPromotion(null);
+                setNewPromotion({
+                  title: "",
+                  description: "",
+                  validUntil: "",
+                  isActive: true,
+                  sendEmail: true,
+                  sendSMS: false,
+                  sendPush: true,
+                });
+              }
+            }}>
               <DialogTrigger asChild>
-                <Button className="bg-secondary text-primary hover:bg-secondary/90">
+                <Button className="bg-secondary text-primary hover:bg-secondary/90" onClick={() => {
+                  setEditingPromotion(null);
+                  setNewPromotion({
+                    title: "",
+                    description: "",
+                    validUntil: "",
+                    isActive: true,
+                    sendEmail: true,
+                    sendSMS: false,
+                    sendPush: true,
+                  });
+                }}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Promotion
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Create New Promotion</DialogTitle>
+                  <DialogTitle>{editingPromotion ? "Edit Promotion" : "Create New Promotion"}</DialogTitle>
                   <DialogDescription>
-                    Send promotional offers to all members
+                    {editingPromotion ? "Update the promotion details" : "Send promotional offers to all members"}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -158,52 +212,71 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="validUntil">Valid Until</Label>
-                    <Input
-                      id="validUntil"
-                      type="date"
-                      value={newPromotion.validUntil}
-                      onChange={(e) => setNewPromotion({ ...newPromotion, validUntil: e.target.value })}
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="validUntil">Valid Until</Label>
+                      <Input
+                        id="validUntil"
+                        type="date"
+                        value={newPromotion.validUntil}
+                        onChange={(e) => setNewPromotion({ ...newPromotion, validUntil: e.target.value })}
+                      />
+                    </div>
+                    {editingPromotion && (
+                      <div className="space-y-2">
+                        <Label htmlFor="isActive">Status</Label>
+                        <div className="flex items-center space-x-2 pt-2">
+                          <Checkbox
+                            id="isActive"
+                            checked={newPromotion.isActive}
+                            onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, isActive: checked as boolean })}
+                          />
+                          <Label htmlFor="isActive" className="cursor-pointer">
+                            Active (Visible to members)
+                          </Label>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="space-y-3 pt-4 border-t">
-                    <Label>Notification Channels</Label>
+                  {!editingPromotion && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <Label>Notification Channels</Label>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sendEmail"
-                        checked={newPromotion.sendEmail}
-                        onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendEmail: checked as boolean })}
-                      />
-                      <Label htmlFor="sendEmail" className="cursor-pointer">
-                        Send via Email
-                      </Label>
-                    </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sendEmail"
+                          checked={newPromotion.sendEmail}
+                          onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendEmail: checked as boolean })}
+                        />
+                        <Label htmlFor="sendEmail" className="cursor-pointer">
+                          Send via Email
+                        </Label>
+                      </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sendSMS"
-                        checked={newPromotion.sendSMS}
-                        onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendSMS: checked as boolean })}
-                      />
-                      <Label htmlFor="sendSMS" className="cursor-pointer">
-                        Send via SMS
-                      </Label>
-                    </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sendSMS"
+                          checked={newPromotion.sendSMS}
+                          onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendSMS: checked as boolean })}
+                        />
+                        <Label htmlFor="sendSMS" className="cursor-pointer">
+                          Send via SMS
+                        </Label>
+                      </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sendPush"
-                        checked={newPromotion.sendPush}
-                        onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendPush: checked as boolean })}
-                      />
-                      <Label htmlFor="sendPush" className="cursor-pointer">
-                        Send Push Notification
-                      </Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sendPush"
+                          checked={newPromotion.sendPush}
+                          onCheckedChange={(checked) => setNewPromotion({ ...newPromotion, sendPush: checked as boolean })}
+                        />
+                        <Label htmlFor="sendPush" className="cursor-pointer">
+                          Send Push Notification
+                        </Label>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex gap-3 pt-4">
                     <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
@@ -211,7 +284,7 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
                     </Button>
                     <Button className="flex-1 bg-primary text-white" onClick={handleCreatePromotion}>
                       <Send className="w-4 h-4 mr-2" />
-                      Create & Send
+                      {editingPromotion ? "Update Promotion" : "Create & Send"}
                     </Button>
                   </div>
                 </div>
@@ -231,25 +304,29 @@ export function PromotionsManager({ onBack }: PromotionsManagerProps) {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {promotions.map((promotion) => (
-              <Card key={promotion.id}>
+              <Card key={promotion.id} className={!promotion.isActive ? "opacity-60 bg-muted/20" : ""}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle>{promotion.title}</CardTitle>
-                      <CardDescription className="mt-2">
+                      <CardTitle className="flex items-center gap-2">
+                        {promotion.title}
+                        {!promotion.isActive && <span className="text-xs font-normal px-2 py-0.5 bg-muted text-muted-foreground rounded">Inactive</span>}
+                      </CardTitle>
+                      <CardDescription className="mt-2 line-clamp-2">
                         {promotion.description}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => handleEditClick(promotion)}>
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeletePromotion(promotion.id)}
+                        disabled={!promotion.isActive}
                       >
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                        <Trash2 className={`w-4 h-4 ${promotion.isActive ? "text-destructive" : "text-muted-foreground"}`} />
                       </Button>
                     </div>
                   </div>

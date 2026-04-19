@@ -62,5 +62,27 @@
     server: {
       port: 3000,
       open: true,
+      proxy: {
+        // Forward every /api request to the backend — no CORS in the browser
+        '/api': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            // Ensure cookies are forwarded correctly through the proxy
+            proxy.on('proxyReq', (proxyReq, req) => {
+              if (req.headers.cookie) {
+                proxyReq.setHeader('Cookie', req.headers.cookie);
+              }
+            });
+          },
+        },
+        // Forward /uploads so menu/venue/profile images load in dev
+        '/uploads': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     },
   });

@@ -8,7 +8,10 @@ export interface StaffMember extends User {
 export const staffAPI = {
     getAll: async (): Promise<StaffMember[]> => {
         const response = await api.get('staff');
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        return [];
     },
 
     updateRole: async (id: number, role: string): Promise<any> => {

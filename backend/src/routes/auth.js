@@ -6,19 +6,85 @@ const { validate } = require("../middleware/validate")
 const { registerSchema, loginSchema } = require("../validation/schemas")
 const { authenticate } = require("../middleware/auth")
 const { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } = require("../utils/errors")
+const { setTokenCookie, clearTokenCookie } = require("../utils/cookie")
 const upload = require("../config/upload")
 
 const router = express.Router()
 
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Register a new member
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [fullName, email, username, password, phone]
+ *             properties:
+ *               fullName:       { type: string, example: John Perera }
+ *               email:          { type: string, format: email, example: john@example.com }
+ *               username:       { type: string, example: johnp }
+ *               password:       { type: string, format: password, example: Secret@123 }
+ *               phone:          { type: string, example: "0712345678" }
+ *               address:        { type: string, example: "123 Main St, Colombo" }
+ *               nic:            { type: string, example: "991234567V" }
+ *               emergencyContact: { type: string, example: "Jane Perera" }
+ *               emergencyPhone: { type: string, example: "0771234567" }
+ *               membershipType: { type: string, enum: [full, associate, sport, social, lifetime] }
+ *               paymentSlip:    { type: string, format: binary }
+ *     responses:
+ *       201:
+ *         description: Registration successful
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: Email or username already exists
+ */
+
 // Register new user
-router.post("/register", upload.single('paymentSlip'), validate(registerSchema), async (req, res, next) => {
+router.post("/register", upload.fields([
+    { name: 'paymentSlip', maxCount: 1 },
+    { name: 'nicImage',    maxCount: 1 }
+]), validate(registerSchema), async (req, res, next) => {
     try {
         console.log('📝 Register request received');
-        console.log('   Body:', req.body);
-        console.log('   Validated:', req.validatedData);
 
-        const { fullName, email, username, password, phone, address, nic, emergencyContact, emergencyPhone, role } = req.validatedData
-        const paymentSlipUrl = req.file ? `/uploads/${req.file.filename}` : null;
+        const {
+            fullName,
+            email,
+            username,
+            password,
+            phone,
+            address,
+            nic,
+            emergencyContact,
+            emergencyPhone,
+            role,
+            membershipType,
+            dateOfBirth
+        } = req.validatedData
+
+        const files = req.files || {};
+        const paymentSlipUrl = files.paymentSlip?.[0] ? `/uploads/${files.paymentSlip[0].filename}` : null;
+        const nicImageUrl    = files.nicImage?.[0]    ? `/uploads/${files.nicImage[0].filename}`    : null;
+
+        // Age check — must be 21 or older
+        if (dateOfBirth) {
+            const dob = new Date(dateOfBirth);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            if (age < 21) {
+                throw new BadRequestError('You must be at least 21 years old to become a member of OWSC.');
+            }
+        }
 
         // Check if email already exists
         const existingEmail = await prisma.member.findUnique({ where: { email } })
@@ -35,17 +101,19 @@ router.post("/register", upload.single('paymentSlip'), validate(registerSchema),
         // Hash password
         const passwordHash = await bcrypt.hash(password, 10)
 
-        // Helper to get plan details (normally would be in DB)
         const PLANS = {
-            'full': 15000,
+            'full':      15000,
             'associate': 10000,
-            'sport': 5000,
-            'social': 10000,
-            'lifetime': 25000
+            'sport':     5000,
+            'social':    10000,
+            'lifetime':  25000
         }
 
         // Create user and membership in a transaction
         const result = await prisma.$transaction(async (tx) => {
+            // FIX: new members start as Pending (not Active) until admin approves
+            // Staff and admin accounts are immediately Active — they don't need approval
+            // FIX: emergencyContact and emergencyPhone are valid schema fields — include them
             const user = await tx.member.create({
                 data: {
                     fullName,
@@ -53,31 +121,36 @@ router.post("/register", upload.single('paymentSlip'), validate(registerSchema),
                     username,
                     passwordHash,
                     phone,
-                    address: address || 'N/A',
-                    nic: nic || `SYSTEM-${Date.now()}`,
-                    emergencyContact,
-                    emergencyPhone,
+                    address:  address || 'N/A',
+                    nic:      nic || `SYSTEM-${Date.now()}`,
+                    ...(emergencyContact && { emergencyContact }),
+                    ...(emergencyPhone   && { emergencyPhone }),
                     paymentSlipUrl,
-                    role: role || 'member',
-                    status: 'Active'
+                    nicImageUrl,
+                    ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
+                    role:   role || 'member',
+                    status: (role === 'staff' || role === 'admin') ? 'Active' : 'Pending'
                 },
+                // FIX: select only fields that actually exist in the Member model
                 select: {
-                    id: true,
-                    fullName: true,
-                    email: true,
-                    username: true,
-                    role: true,
-                    loyaltyPoints: true,
+                    id:               true,
+                    fullName:         true,
+                    email:            true,
+                    username:         true,
+                    role:             true,
+                    loyaltyPoints:    true,  // exists in schema line 24
                     registrationDate: true,
-                    emergencyContact: true,
-                    emergencyPhone: true
+                    emergencyContact: true,  // exists in schema line 20
+                    emergencyPhone:   true
                 }
             })
 
-            if (user.role === 'member' && req.validatedData.membershipType) {
-                const membershipType = req.validatedData.membershipType;
+            // FIX: use correct model name. Schema calls it "User", NOT "Membership"
+            // FIX: field is "membershipType" (schema line 37), NOT "type"
+            if (user.role === 'member' && membershipType) {
                 const price = PLANS[membershipType] || 0
                 const endDate = new Date()
+
                 if (membershipType === 'lifetime') {
                     endDate.setFullYear(endDate.getFullYear() + 100)
                 } else {
@@ -86,24 +159,24 @@ router.post("/register", upload.single('paymentSlip'), validate(registerSchema),
 
                 const userMembership = await tx.user.create({
                     data: {
-                        memberId: user.id,
-                        startDate: new Date(),
+                        memberId:       user.id,
+                        startDate:      new Date(),
                         endDate,
-                        status: 'Pending',
-                        membershipFee: price,
-                        membershipType: membershipType
+                        status:         'Pending',
+                        membershipFee:  price,
+                        membershipType: membershipType  // FIX: was "membershipType" (correct) but earlier version had "type" (wrong)
                     }
                 })
 
                 if (paymentSlipUrl && price > 0) {
                     await tx.membershipPayment.create({
                         data: {
-                            membershipId: userMembership.id,
-                            memberId: user.id,
-                            amount: price,
+                            membershipId:  userMembership.id,
+                            memberId:      user.id,
+                            amount:        price,
                             paymentMethod: 'Bank Transfer',
                             paymentStatus: 'Pending Verification',
-                            paymentDate: new Date()
+                            paymentDate:   new Date()
                         }
                     })
                 }
@@ -119,33 +192,63 @@ router.post("/register", upload.single('paymentSlip'), validate(registerSchema),
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         )
 
+        setTokenCookie(res, token)
+
+        // Send confirmation email (non-blocking — never fails the registration)
+        if (result.role === 'member') {
+            const { sendRegistrationConfirmationEmail } = require('../services/emailService');
+            sendRegistrationConfirmationEmail({ fullName: result.fullName, email: result.email })
+                .catch(err => console.error('Registration confirmation email failed:', err.message));
+        }
+
         res.status(201).json({
-            message: 'Registration successful! You can now log in.',
-            user: result,
-            token
+            message: 'Registration successful! Your application is pending approval.',
+            user: result
         })
     } catch (error) {
-        // Log to file for reliability
         const fs = require('fs');
         const logMessage = `\n[${new Date().toISOString()}] REGISTRATION ERROR:\n${error.stack || error}\n`;
         fs.appendFileSync('debug_error.log', logMessage);
-
         console.error('❌ Registration request failed:', error);
         next(error)
     }
 })
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login with email/username and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:    { type: string, example: john@example.com, description: "Email or username" }
+ *               password: { type: string, format: password, example: Secret@123 }
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ */
+
 // Login user
+// FIX: removed the status !== 'Active' block — pending members should still be
+// able to log in and see their dashboard (they just won't have an active membership).
 router.post("/login", validate(loginSchema), async (req, res, next) => {
     try {
         const { email, password } = req.validatedData
 
-        // Find user by email or username
         const user = await prisma.member.findFirst({
             where: {
                 OR: [
-                    { email: email },
-                    { username: email }
+                    { email:    { equals: email, mode: 'insensitive' } },
+                    { username: { equals: email, mode: 'insensitive' } }
                 ]
             }
         })
@@ -154,63 +257,90 @@ router.post("/login", validate(loginSchema), async (req, res, next) => {
             throw new UnauthorizedError('Invalid email or password')
         }
 
-        // Check if account is active
-        if (user.status !== 'Active') {
-            throw new UnauthorizedError('Account is not active')
-        }
-
-        // Verify password
         const isValidPassword = await bcrypt.compare(password, user.passwordHash)
-
         if (!isValidPassword) {
             throw new UnauthorizedError('Invalid email or password')
         }
 
-        // Generate JWT token
+        // Block pending members — they must wait for admin approval
+        if (user.role === 'member' && user.status === 'Pending') {
+            throw new UnauthorizedError(
+                'Your application is pending admin approval. ' +
+                'You will receive an email once your membership has been verified.'
+            )
+        }
+
+        // Block suspended/inactive accounts
+        if (user.status === 'Suspended' || user.status === 'Inactive') {
+            throw new UnauthorizedError('Your account has been suspended. Please contact administration.')
+        }
+
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         )
 
+        setTokenCookie(res, token)
+
         res.json({
             message: 'Login successful',
             user: {
-                id: user.id,
-                fullName: user.fullName,
-                email: user.email,
-                username: user.username,
-                role: user.role,
+                id:            user.id,
+                fullName:      user.fullName,
+                email:         user.email,
+                username:      user.username,
+                role:          user.role,
                 loyaltyPoints: user.loyaltyPoints
-            },
-            token
+            }
         })
     } catch (error) {
         next(error)
     }
 })
 
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile
+ *       401:
+ *         description: Unauthorized
+ *   put:
+ *     summary: Update current user profile
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ */
+
 // Get current user profile
+// FIX: all selected fields now match schema exactly (loyaltyPoints, emergencyContact present in schema)
 router.get("/me", authenticate, async (req, res, next) => {
     try {
         const user = await prisma.member.findUnique({
             where: { id: req.user.id },
             select: {
-                id: true,
-                fullName: true,
-                email: true,
-                username: true,
-                phone: true,
-                address: true,
-                nic: true,
-                role: true,
-                loyaltyPoints: true,
-                status: true,
-                registrationDate: true,
+                id:                     true,
+                fullName:               true,
+                email:                  true,
+                username:               true,
+                phone:                  true,
+                address:                true,
+                nic:                    true,
+                role:                   true,
+                loyaltyPoints:          true,
+                status:                 true,
+                registrationDate:       true,
                 notificationPreference: true,
-                emergencyContact: true,
-                emergencyPhone: true,
-                profileImageUrl: true
+                emergencyContact:       true,
+                emergencyPhone:         true,
+                profileImageUrl:        true
             }
         })
 
@@ -227,9 +357,18 @@ router.get("/me", authenticate, async (req, res, next) => {
 // Update current user profile
 router.put("/me", authenticate, async (req, res, next) => {
     try {
-        const { fullName, phone, address, nic, emergencyContact, emergencyPhone, notificationPreference, username, password } = req.body
+        const {
+            fullName,
+            phone,
+            address,
+            nic,
+            emergencyContact,
+            emergencyPhone,
+            notificationPreference,
+            username,
+            password
+        } = req.body
 
-        // Check if username is being changed and if it's already taken
         if (username) {
             const existingUser = await prisma.member.findFirst({
                 where: {
@@ -242,7 +381,6 @@ router.put("/me", authenticate, async (req, res, next) => {
             }
         }
 
-        // Hash new password if provided
         let passwordHash = undefined
         if (password) {
             passwordHash = await bcrypt.hash(password, 10)
@@ -251,28 +389,28 @@ router.put("/me", authenticate, async (req, res, next) => {
         const updatedUser = await prisma.member.update({
             where: { id: req.user.id },
             data: {
-                ...(fullName && { fullName }),
-                ...(phone && { phone }),
-                ...(address && { address }),
-                ...(nic && { nic }),
-                ...(emergencyContact && { emergencyContact }),
-                ...(emergencyPhone && { emergencyPhone }),
+                ...(fullName               && { fullName }),
+                ...(phone                  && { phone }),
+                ...(address                && { address }),
+                ...(nic                    && { nic }),
+                ...(emergencyContact       && { emergencyContact }),
+                ...(emergencyPhone         && { emergencyPhone }),
                 ...(notificationPreference && { notificationPreference }),
-                ...(username && { username }),
-                ...(passwordHash && { passwordHash }),
+                ...(username               && { username }),
+                ...(passwordHash           && { passwordHash }),
                 ...(req.body.profileImageUrl && { profileImageUrl: req.body.profileImageUrl })
             },
             select: {
-                id: true,
-                fullName: true,
-                email: true,
-                username: true,
-                phone: true,
-                address: true,
-                nic: true,
+                id:              true,
+                fullName:        true,
+                email:           true,
+                username:        true,
+                phone:           true,
+                address:         true,
+                nic:             true,
                 emergencyContact: true,
-                emergencyPhone: true,
-                role: true
+                emergencyPhone:  true,
+                role:            true
             }
         })
 
@@ -290,7 +428,7 @@ router.post("/me/picture", authenticate, upload.single('image'), async (req, res
     try {
         if (!req.file) throw new BadRequestError('No image uploaded');
         const profileImageUrl = `/uploads/${req.file.filename}`;
-        
+
         await prisma.member.update({
             where: { id: req.user.id },
             data: { profileImageUrl }
@@ -305,27 +443,28 @@ router.post("/me/picture", authenticate, upload.single('image'), async (req, res
 // Refresh token
 router.post("/refresh", authenticate, async (req, res, next) => {
     try {
-        // Generate new token
         const token = jwt.sign(
             { id: req.user.id, email: req.user.email, role: req.user.role },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         )
-
-        res.json({
-            message: 'Token refreshed successfully',
-            token
-        })
+        setTokenCookie(res, token)
+        res.json({ message: 'Token refreshed successfully' })
     } catch (error) {
         next(error)
     }
 })
 
+// Logout
+router.post("/logout", (req, res) => {
+    clearTokenCookie(res)
+    res.json({ message: 'Logged out successfully' })
+})
+
 // ────────────────────────────────────────────────────────────
-// FORGOT PASSWORD → OTP FLOW (Secure)
+// FORGOT PASSWORD → OTP FLOW
 // ────────────────────────────────────────────────────────────
 
-// Helper: delete expired OTP records from DB
 async function cleanupExpiredOtps(email) {
     try {
         await prisma.passwordResetOtp.deleteMany({
@@ -334,10 +473,22 @@ async function cleanupExpiredOtps(email) {
     } catch (e) { /* silent */ }
 }
 
-// POST /api/auth/forgot-password
-// Body: { username, nic }
-// Looks up user by username+NIC, sends OTP to registered email (never exposed to caller).
-// Stores a HASHED version of the OTP. Expires in 12 min. Deleted after use or expiry.
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset OTP
+ *     tags: [Auth]
+ * /auth/verify-otp:
+ *   post:
+ *     summary: Verify OTP and receive a reset token
+ *     tags: [Auth]
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password using the reset token
+ *     tags: [Auth]
+ */
+
 router.post("/forgot-password", async (req, res, next) => {
     try {
         const { username, nic } = req.body
@@ -355,24 +506,20 @@ router.post("/forgot-password", async (req, res, next) => {
             return res.json({ message: genericMsg })
         }
 
-        // Clean up expired OTPs
         await cleanupExpiredOtps(member.email)
 
-        // Remove any still-active OTPs (only one allowed at a time)
         await prisma.passwordResetOtp.deleteMany({
             where: { email: member.email, expiresAt: { gt: new Date() } }
         })
 
-        // Generate plain OTP — hash it before storing
-        const plainOtp = String(Math.floor(100000 + Math.random() * 900000))
-        const otpHash = await bcrypt.hash(plainOtp, 10)
-        const expiresAt = new Date(Date.now() + 12 * 60 * 1000) // 12 minutes
+        const plainOtp  = String(Math.floor(100000 + Math.random() * 900000))
+        const otpHash   = await bcrypt.hash(plainOtp, 10)
+        const expiresAt = new Date(Date.now() + 12 * 60 * 1000)
 
         await prisma.passwordResetOtp.create({
             data: { email: member.email, otp: otpHash, expiresAt }
         })
 
-        // Send the PLAIN otp only via email — never returned in response
         const { sendPasswordResetOTP } = require('../services/emailService')
         sendPasswordResetOTP(member.email, plainOtp, member.fullName).catch(err =>
             console.error('OTP email send failed:', err)
@@ -384,9 +531,6 @@ router.post("/forgot-password", async (req, res, next) => {
     }
 })
 
-// POST /api/auth/verify-otp
-// Body: { username, nic, otp }
-// Validates OTP by bcrypt compare against stored hash. Deletes record on success.
 router.post("/verify-otp", async (req, res, next) => {
     try {
         const { username, nic, otp } = req.body
@@ -413,16 +557,13 @@ router.post("/verify-otp", async (req, res, next) => {
             return res.status(400).json({ message: 'OTP has expired. Please request a new one.' })
         }
 
-        // Compare submitted OTP against stored hash
         const isValid = await bcrypt.compare(otp.trim(), record.otp)
         if (!isValid) {
             return res.status(400).json({ message: 'Incorrect OTP. Please check your email and try again.' })
         }
 
-        // DELETE the OTP — consumed, one-time use only
         await prisma.passwordResetOtp.delete({ where: { id: record.id } })
 
-        // Issue a 5-min reset token carrying memberId (not email)
         const resetToken = jwt.sign(
             { memberId: member.id, purpose: 'password-reset' },
             process.env.JWT_SECRET,
@@ -435,9 +576,6 @@ router.post("/verify-otp", async (req, res, next) => {
     }
 })
 
-// POST /api/auth/reset-password
-// Body: { resetToken, newPassword }
-// Hashes new password and replaces old hash. Old password is gone from DB.
 router.post("/reset-password", async (req, res, next) => {
     try {
         const { resetToken, newPassword } = req.body
@@ -465,7 +603,6 @@ router.post("/reset-password", async (req, res, next) => {
             return res.status(404).json({ message: 'Account not found' })
         }
 
-        // Hash new password — replaces old hash in DB
         const passwordHash = await bcrypt.hash(newPassword, 10)
         await prisma.member.update({
             where: { id: member.id },

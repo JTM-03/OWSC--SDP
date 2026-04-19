@@ -18,7 +18,10 @@ export interface Event {
 export const eventsAPI = {
     getAllEvents: async (): Promise<Event[]> => {
         const response = await api.get('events');
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        return [];
     },
 
     createEvent: async (data: Omit<Event, 'id' | 'createdDate'>): Promise<Event> => {

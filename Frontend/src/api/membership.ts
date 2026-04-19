@@ -15,7 +15,16 @@ export interface Membership {
     endDate: string;
     status: string;
     membershipFee: number;
-    type?: string; // Added type
+    membershipType?: string; // actual DB column name
+    type?: string;           // alias added by backend for frontend compatibility
+    payments?: {
+        id: number;
+        amount: number;
+        paymentMethod: string;
+        paymentStatus: string;
+        paymentDate: string;
+        receiptUrl?: string | null;
+    }[];
 }
 
 export interface Member {
@@ -23,6 +32,11 @@ export interface Member {
     fullName: string;
     email: string;
     phone: string;
+    nic?: string;
+    address?: string;
+    paymentSlipUrl?: string | null;
+    emergencyContact?: string;
+    emergencyPhone?: string;
     status: string;
     role: string;
     registrationDate: string;
@@ -76,7 +90,13 @@ export const membershipAPI = {
 
     getAllRequests: async (): Promise<UpgradeRequest[]> => {
         const response = await api.get('membership/upgrade-requests');
-        return response.data;
+        const data = response.data;
+        // FIX: safely unwrap in case backend returns a wrapped object
+        if (Array.isArray(data))           return data;
+        if (Array.isArray(data?.requests)) return data.requests;
+        if (Array.isArray(data?.data))     return data.data;
+        console.error('Unexpected /membership/upgrade-requests response shape:', data);
+        return [];
     },
 
     updateRequestStatus: async (requestId: number, status: 'Approved' | 'Rejected') => {
@@ -84,8 +104,16 @@ export const membershipAPI = {
         return response.data;
     },
 
+    // FIX: was returning response.data directly — if the backend 404s or returns
+    // an error/wrapped object, members.filter() in MembershipManagement.tsx crashes.
+    // Now safely unwraps any response shape and always returns an array.
     getAdminMembers: async (): Promise<Member[]> => {
         const response = await api.get('admin/members');
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data))           return data;
+        if (Array.isArray(data?.members))  return data.members;
+        if (Array.isArray(data?.data))     return data.data;
+        console.error('Unexpected /admin/members response shape:', data);
+        return [];
     }
 };

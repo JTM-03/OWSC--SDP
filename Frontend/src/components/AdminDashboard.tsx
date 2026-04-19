@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DollarSign, Calendar, Package, Users, TrendingUp, Clock, Send, BarChart3, UserCog, UtensilsCrossed, MapPin, Ticket, Loader2, LogOut, Eye, User, Shield, CheckCircle, XCircle } from "lucide-react";
+import { TrendingUp, Calendar, Package, Users, Clock, Loader2, LogOut, Eye, User, Shield, CheckCircle, XCircle, LayoutDashboard, ClipboardList, Boxes, UtensilsCrossed, Tag, BookOpen, UserCog, Users2, CalendarDays, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { adminAPI, AdminStats, PendingMembership } from "../api/admin";
 import { toast } from "sonner@2.0.3";
+import { getFileUrl, getImageUrl } from "../utils/image";
 import { MembershipManagement } from "./MembershipManagement";
 import { PromotionsManager } from "./PromotionsManager";
 import { MenuManagement } from "./MenuManagement";
@@ -19,6 +20,7 @@ import { VenueStaffing } from "./VenueStaffing";
 import { EventsManagement } from "./EventsManagement";
 import { OrderManagement } from "./OrderManagement";
 import { VenueBookingsManagement } from "./VenueBookingsManagement";
+import { OrderNotificationCenter } from "./OrderNotificationCenter";
 
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
@@ -76,9 +78,9 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
   const kpiData = [
     {
       title: "Today's Revenue",
-      value: `Rs. ${(stats?.kpis.revenue || 0).toLocaleString()}`,
+      value: `Rs. ${Number(stats?.kpis.revenue || 0).toLocaleString()}`,
       change: "+0% today",
-      icon: DollarSign,
+      icon: TrendingUp,
       color: "text-green-600",
       bgColor: "bg-green-100",
     },
@@ -100,7 +102,7 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
     },
     {
       title: "Pending Approvals",
-      value: pendingApprovals.length.toString(),
+      value: (pendingApprovals?.length || 0).toString(),
       change: "Member requests",
       icon: Users,
       color: "text-purple-600",
@@ -110,6 +112,7 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
 
   return (
     <div className="min-h-screen bg-background">
+
       {/* Header */}
       <header className="bg-primary text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
@@ -121,43 +124,62 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
                 <p className="text-xs text-white/80">Premium Venue Management</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              onClick={onLogout}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <OrderNotificationCenter
+                onOrderClick={() => setActiveTab('orders')}
+              />
+              <div className="w-px h-6 bg-white/20 mx-1" />
+              <Button
+                variant="outline"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-sm gap-2"
+                onClick={onLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-3 justify-center mb-8">
+      {/* Sidebar + Content layout */}
+      <div className="flex min-h-[calc(100vh-72px)]">
+
+        {/* ── Sidebar ── */}
+        <aside className="w-56 flex-shrink-0 bg-card border-r border-border sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto">
+          <nav className="p-3 space-y-1">
             {[
-              { value: "overview", label: "Overview" },
-              { value: "members", label: "Membership" },
-              { value: "orders", label: "Orders" },
-              { value: "inventory", label: "Inventory" },
-              { value: "menu", label: "Menu" },
-              { value: "promotions", label: "Promotions" },
-              { value: "bookings", label: "Bookings" },
-              { value: "staff", label: "Staff" },
-              { value: "venue-staff", label: "Venue Staffing" },
-              { value: "events", label: "Events" },
-              { value: "reports", label: "Reports" },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="px-6 py-3 rounded-lg border bg-card shadow-sm data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+              { value: "overview",    label: "Overview",       icon: LayoutDashboard },
+              { value: "members",     label: "Membership",     icon: Users },
+              { value: "orders",      label: "Orders",         icon: ClipboardList },
+              { value: "inventory",   label: "Inventory",      icon: Boxes },
+              { value: "menu",        label: "Menu",           icon: UtensilsCrossed },
+              { value: "promotions",  label: "Promotions",     icon: Tag },
+              { value: "bookings",    label: "Bookings",       icon: BookOpen },
+              { value: "staff",       label: "Staff",          icon: UserCog },
+              { value: "venue-staff", label: "Venue Staffing", icon: Users2 },
+              { value: "events",      label: "Events",         icon: CalendarDays },
+              { value: "reports",     label: "Reports",        icon: BarChart3 },
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setActiveTab(value)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left
+                  ${activeTab === value
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  }`}
               >
-                {tab.label}
-              </TabsTrigger>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {label}
+              </button>
             ))}
-          </TabsList>
+          </nav>
+        </aside>
+
+        {/* ── Main content ── */}
+        <main className="flex-1 min-w-0 px-8 py-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* KPI Cards */}
@@ -190,10 +212,15 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={revenueData}>
+                    <BarChart data={revenueData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                      <YAxis axisLine={false} tickLine={false} tickFormatter={(value) => `Rs.${value}`} />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(value) => `Rs.${value.toLocaleString()}`}
+                        width={75}
+                      />
                       <Tooltip
                         formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, 'Revenue']}
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
@@ -371,7 +398,7 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
                       <div className="space-y-8 flex flex-col h-full">
                           <div className="space-y-6 flex-1">
                               <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest border-b border-primary/10 pb-2">
-                                  <DollarSign className="w-4 h-4" /> Payment Slip
+                                  <TrendingUp className="w-4 h-4" /> Payment Slip
                               </div>
                               
                               <div className="flex-1 mt-1 rounded-xl border bg-muted/5 shadow-sm overflow-hidden min-h-[250px] relative">
@@ -383,7 +410,7 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
                                                       <span className="text-red-500 font-bold text-xl">PDF</span>
                                                   </div>
                                                   <p className="text-sm font-bold mb-3">Document Attached</p>
-                                                  <a href={`http://localhost:5000${selectedMember.member.paymentSlipUrl}`} target="_blank" rel="noreferrer">
+                                                  <a href={getFileUrl(selectedMember.member.paymentSlipUrl)} target="_blank" rel="noreferrer">
                                                       <Button variant="outline" size="sm" className="w-full">
                                                           Open PDF Viewer
                                                       </Button>
@@ -391,9 +418,10 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
                                               </div>
                                           ) : (
                                               <img 
-                                                  src={`http://localhost:5000${selectedMember.member.paymentSlipUrl}`} 
+                                                  src={getImageUrl(selectedMember.member.paymentSlipUrl) || undefined} 
                                                   alt="Payment Slip" 
                                                   className="max-w-full max-h-[300px] object-contain drop-shadow-sm rounded border bg-white p-2"
+                                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                               />
                                           )}
                                       </div>
@@ -484,6 +512,7 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
             <Reports onBack={() => setActiveTab('overview')} />
           </TabsContent>
         </Tabs>
+        </main>
       </div>
     </div>
   );

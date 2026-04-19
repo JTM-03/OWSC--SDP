@@ -272,6 +272,10 @@ export function MyOrders({ onBack }: MyOrdersProps) {
       {/* Order Details Dialog */}
       <Dialog open={selectedOrder !== null} onOpenChange={(open) => !open && setSelectedOrder(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-0 border-none shadow-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Order Details</DialogTitle>
+            <DialogDescription>Full breakdown of your selected order including items, status, and total.</DialogDescription>
+          </DialogHeader>
           {selectedOrder && (
             <div className="animate-in fade-in zoom-in duration-300">
               <div className="bg-[#1a2b3c] text-[#fdf2d0] p-8">

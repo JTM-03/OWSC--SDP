@@ -37,10 +37,11 @@ export interface LoginData {
 export interface AuthResponse {
     message: string;
     user: User;
-    token: string;
+    // token is no longer returned — it lives in the HttpOnly cookie
 }
 
-// Authentication API calls
+// ─── API calls ────────────────────────────────────────────────────────────────
+
 export const authAPI = {
     register: async (data: RegisterData | FormData): Promise<AuthResponse> => {
         const isFormData = data instanceof FormData;
@@ -55,6 +56,10 @@ export const authAPI = {
         return response.data;
     },
 
+    logout: async (): Promise<void> => {
+        await api.post('auth/logout');
+    },
+
     getProfile: async (): Promise<{ user: User }> => {
         const response = await api.get('auth/me');
         return response.data;
@@ -65,7 +70,7 @@ export const authAPI = {
         return response.data;
     },
 
-    refreshToken: async (): Promise<{ message: string; token: string }> => {
+    refreshToken: async (): Promise<{ message: string }> => {
         const response = await api.post('auth/refresh');
         return response.data;
     },
@@ -86,29 +91,32 @@ export const authAPI = {
     },
 };
 
-// Helper functions
-export const setAuthToken = (token: string) => {
-    localStorage.setItem('token', token);
-};
+// ─── User storage helpers (localStorage — NOT the token) ─────────────────────
+// The JWT token is stored exclusively in an HttpOnly cookie managed by the browser.
+// We only persist the user object so the UI can restore state on page refresh
+// without an extra network round-trip.
 
-export const setUser = (user: User) => {
+export const setUser = (user: User): void => {
     localStorage.setItem('user', JSON.stringify(user));
 };
 
-export const getAuthToken = (): string | null => {
-    return localStorage.getItem('token');
-};
-
 export const getStoredUser = (): User | null => {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    const raw = localStorage.getItem('user');
+    return raw ? JSON.parse(raw) : null;
 };
 
-export const clearAuth = () => {
-    localStorage.removeItem('token');
+export const clearStoredUser = (): void => {
     localStorage.removeItem('user');
 };
 
-export const isAuthenticated = (): boolean => {
-    return !!getAuthToken();
-};
+// ─── Deprecated token helpers (kept as no-ops so old imports don't break) ────
+/** @deprecated Token is now in an HttpOnly cookie. This is a no-op. */
+export const setAuthToken = (_token: string): void => { /* no-op */ };
+/** @deprecated Token is now in an HttpOnly cookie. This is a no-op. */
+export const getAuthToken = (): null => null;
+/** @deprecated Use clearStoredUser() instead. */
+export const clearAuth = (): void => { clearStoredUser(); };
+
+// isAuthenticated can no longer rely on a token in storage.
+// Use the AuthContext `isAuthenticated` flag (derived from whether `user` is set).
+export const isAuthenticated = (): boolean => !!getStoredUser();

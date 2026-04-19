@@ -4,8 +4,109 @@ const { z } = require("zod")
 const { validate } = require("../middleware/validate")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { parsePagination, paginationMeta } = require("../utils/pagination")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /staffing/venue/{venueId}:
+ *   get:
+ *     summary: Get staff assignments for a venue with pagination
+ *     tags: [Staffing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: venueId
+ *         required: true
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *     responses:
+ *       200:
+ *         description: Paginated assignments
+ *
+ * /staffing/check-availability:
+ *   get:
+ *     summary: Check which staff are busy for a given date/time
+ *     tags: [Staffing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: startTime
+ *         required: true
+ *         schema: { type: string, example: "09:00" }
+ *       - in: query
+ *         name: endTime
+ *         required: true
+ *         schema: { type: string, example: "17:00" }
+ *     responses:
+ *       200:
+ *         description: Map of busy staff IDs
+ *
+ * /staffing:
+ *   post:
+ *     summary: Create a new staff assignment (Admin/Manager)
+ *     tags: [Staffing]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [venueId, staffId, assignmentDate, startTime, endTime]
+ *             properties:
+ *               venueId:        { type: integer }
+ *               staffId:        { type: integer }
+ *               assignmentDate: { type: string, format: date }
+ *               startTime:      { type: string, example: "09:00" }
+ *               endTime:        { type: string, example: "17:00" }
+ *               eventName:      { type: string }
+ *               role:           { type: string }
+ *     responses:
+ *       201:
+ *         description: Assignment created
+ *
+ * /staffing/{id}:
+ *   put:
+ *     summary: Update a staff assignment (Admin/Manager)
+ *     tags: [Staffing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Assignment updated
+ *   delete:
+ *     summary: Remove a staff assignment (Admin/Manager)
+ *     tags: [Staffing]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Assignment removed
+ */
 
 // Validation Schemas
 const assignmentSchema = z.object({
@@ -22,33 +123,32 @@ const assignmentSchema = z.object({
 router.get("/venue/:venueId", authenticate, async (req, res, next) => {
     try {
         const { venueId } = req.params
+        const { skip, take, page, limit } = parsePagination(req.query)
 
-        const assignments = await prisma.venueAssignment.findMany({
-            where: {
-                venueId: parseInt(venueId),
-                status: { not: 'cancelled' }
-            },
-            include: {
-                staff: {
-                    select: {
-                        id: true,
-                        fullName: true,
-                        role: true
-                    }
-                }
-            },
-            orderBy: {
-                assignmentDate: 'desc'
-            }
-        })
+        const where = {
+            venueId: parseInt(venueId),
+            status: { not: 'cancelled' }
+        }
 
-        // Transform for frontend
-        const formattedAssignments = assignments.map(a => ({
+        const [assignments, total] = await Promise.all([
+            prisma.venueAssignment.findMany({
+                where,
+                include: {
+                    staff: { select: { id: true, fullName: true, role: true } }
+                },
+                orderBy: { assignmentDate: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.venueAssignment.count({ where })
+        ])
+
+        const formatted = assignments.map(a => ({
             id: a.id,
             venueId: a.venueId,
             staffId: a.staffId,
             staffName: a.staff.fullName,
-            staffRole: a.role, // Use assignment role, fallback to staff role if needed
+            staffRole: a.role,
             eventName: a.eventName || "Scheduled Event",
             eventDate: a.assignmentDate,
             startTime: a.startTime,
@@ -56,7 +156,53 @@ router.get("/venue/:venueId", authenticate, async (req, res, next) => {
             status: a.status
         }))
 
-        res.json(formattedAssignments)
+        res.json({ data: formatted, meta: paginationMeta(total, page, limit) })
+    } catch (error) {
+        next(error)
+    }
+})
+
+// GET /api/staffing/check-availability - Check which staff are busy for a given date/time
+router.get("/check-availability", authenticate, async (req, res, next) => {
+    try {
+        const { date, startTime, endTime } = req.query
+
+        if (!date || !startTime || !endTime) {
+            return res.status(400).json({ error: 'date, startTime, and endTime are required' })
+        }
+
+        const dateObj = new Date(date)
+
+        // Find all assignments for this date that overlap with the requested time
+        // Overlap condition: existingStart < requestedEnd AND existingEnd > requestedStart
+        const conflictingAssignments = await prisma.venueAssignment.findMany({
+            where: {
+                assignmentDate: dateObj,
+                status: { not: 'cancelled' },
+                startTime: { lt: endTime },
+                endTime: { gt: startTime }
+            },
+            select: {
+                staffId: true,
+                startTime: true,
+                endTime: true,
+                eventName: true,
+                venue: { select: { name: true } }
+            }
+        })
+
+        // Return map of staffId -> conflict details
+        const busyStaffMap = {}
+        conflictingAssignments.forEach(a => {
+            busyStaffMap[a.staffId] = {
+                eventName: a.eventName || 'Scheduled Event',
+                venueName: a.venue?.name || 'Unknown Venue',
+                startTime: a.startTime,
+                endTime: a.endTime
+            }
+        })
+
+        res.json({ busyStaff: busyStaffMap })
     } catch (error) {
         next(error)
     }
@@ -70,29 +216,22 @@ router.post("/", authenticate, requireRole('admin', 'manager'), validate(assignm
         // Parse date correctly
         const dateObj = new Date(assignmentDate)
 
-        // Check for conflicts
+        // Proper overlap check: existingStart < newEnd AND existingEnd > newStart
         const existingAssignment = await prisma.venueAssignment.findFirst({
             where: {
                 staffId,
                 assignmentDate: dateObj,
                 status: { not: 'cancelled' },
-                OR: [
-                    {
-                        // Overlaps start
-                        startTime: { lte: startTime },
-                        endTime: { gt: startTime }
-                    },
-                    {
-                        // Overlaps end
-                        startTime: { lt: endTime },
-                        endTime: { gte: endTime }
-                    }
-                ]
-            }
+                startTime: { lt: endTime },
+                endTime: { gt: startTime }
+            },
+            include: { venue: true }
         })
 
         if (existingAssignment) {
-            throw new BadRequestError('Staff member is already assigned to another venue at this time')
+            throw new BadRequestError(
+                `Staff member is already assigned to "${existingAssignment.venue?.name || 'another venue'}" from ${existingAssignment.startTime} to ${existingAssignment.endTime} on this date`
+            )
         }
 
         const assignment = await prisma.venueAssignment.create({
@@ -118,6 +257,67 @@ router.post("/", authenticate, requireRole('admin', 'manager'), validate(assignm
         })
     } catch (error) {
         next(error)
+    }
+})
+
+// PUT /api/staffing/:id - Update an existing assignment
+router.put("/:id", authenticate, requireRole('admin', 'manager'), async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const { venueId, staffId, assignmentDate, startTime, endTime, eventName, role, status } = req.body
+
+        // If changing date/time/staff, check for conflicts
+        if (assignmentDate && startTime && endTime && staffId) {
+            const dateObj = new Date(assignmentDate)
+
+            const conflicting = await prisma.venueAssignment.findFirst({
+                where: {
+                    id: { not: parseInt(id) }, // Exclude current assignment
+                    staffId: parseInt(staffId),
+                    assignmentDate: dateObj,
+                    status: { not: 'cancelled' },
+                    startTime: { lt: endTime },
+                    endTime: { gt: startTime }
+                },
+                include: { venue: true }
+            })
+
+            if (conflicting) {
+                throw new BadRequestError(
+                    `Staff member is already assigned to "${conflicting.venue?.name || 'another venue'}" from ${conflicting.startTime} to ${conflicting.endTime} on this date`
+                )
+            }
+        }
+
+        const updateData = {}
+        if (venueId) updateData.venueId = parseInt(venueId)
+        if (staffId) updateData.staffId = parseInt(staffId)
+        if (assignmentDate) updateData.assignmentDate = new Date(assignmentDate)
+        if (startTime) updateData.startTime = startTime
+        if (endTime) updateData.endTime = endTime
+        if (eventName !== undefined) updateData.eventName = eventName
+        if (role) updateData.role = role
+        if (status) updateData.status = status
+
+        const assignment = await prisma.venueAssignment.update({
+            where: { id: parseInt(id) },
+            data: updateData,
+            include: {
+                venue: true,
+                staff: true
+            }
+        })
+
+        res.json({
+            message: 'Assignment updated successfully',
+            assignment
+        })
+    } catch (error) {
+        if (error.code === 'P2025') {
+            next(new NotFoundError('Assignment not found'))
+        } else {
+            next(error)
+        }
     }
 })
 

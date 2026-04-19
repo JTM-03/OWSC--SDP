@@ -39,7 +39,10 @@ export const adminAPI = {
 
     getPendingMemberships: async (): Promise<PendingMembership[]> => {
         const response = await api.get('admin/pending-memberships');
-        return response.data;
+        const data = response.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
+        return [];
     },
 
     updateMembershipStatus: async (id: number, status: string): Promise<void> => {
@@ -53,6 +56,11 @@ export const adminAPI = {
 
     updateBooking: async (id: number, data: any): Promise<any> => {
         const response = await api.put(`venues/bookings/${id}`, data);
+        return response.data;
+    },
+
+    verifyBookingPayment: async (id: number): Promise<any> => {
+        const response = await api.put(`venues/bookings/${id}/verify-payment`);
         return response.data;
     }
 };

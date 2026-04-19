@@ -191,6 +191,7 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
                     <TableHead>Order ID</TableHead>
                     <TableHead>Date & Time</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Waiter</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead className="text-right">Total Amount</TableHead>
                     <TableHead>Status</TableHead>
@@ -218,6 +219,17 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
                           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                             {order.orderType}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {order.orderType === 'Dine-in' ? (
+                            order.staff ? (
+                              <span className="text-sm font-medium">{order.staff.fullName}</span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )
+                          ) : (
+                            <span className="text-xs text-muted-foreground">N/A</span>
+                          )}
                         </TableCell>
                         <TableCell>{order.orderItems?.length || 0} items</TableCell>
                         <TableCell className="text-right font-medium">Rs. {Number(order.totalAmount).toLocaleString()}</TableCell>
@@ -262,6 +274,16 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
                   <p className="text-sm text-muted-foreground">
                     Placed at: {new Date(selectedOrder.orderDate).toLocaleString()}
                   </p>
+                  {selectedOrder.orderType === 'Dine-in' && (
+                    <p className="text-sm mt-1">
+                      <span className="text-muted-foreground">Waiter: </span>
+                      <span className="font-semibold text-primary">
+                        {selectedOrder.staff
+                          ? `${selectedOrder.staff.fullName} (ID #${selectedOrder.staff.id})`
+                          : '—'}
+                      </span>
+                    </p>
+                  )}
                 </div>
                 <Badge variant="outline" className={getStatusColor(selectedOrder.orderStatus)}>
                    <span className="flex items-center gap-1">
@@ -286,7 +308,17 @@ export function OrderManagement({ onBack }: OrderManagementProps) {
                 </div>
               </div>
 
+              <div className="flex justify-between items-center py-2 border-t">
+                <span className="font-semibold text-foreground">Subtotal</span>
+                <span className="font-semibold">Rs. {Number((selectedOrder.subtotalAmount || selectedOrder.totalAmount * 0.9)).toLocaleString()}</span>
+              </div>
+
               <div className="flex justify-between items-center py-2">
+                <span className="font-semibold text-foreground">Service Fee</span>
+                <span className="font-semibold text-orange-600">Rs. {Number(selectedOrder.serviceFee || (selectedOrder.totalAmount * 0.1)).toLocaleString()}</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-t border-b bg-secondary/10 px-4">
                 <span className="font-bold text-foreground">Total Billable Amount</span>
                 <span className="text-2xl font-bold font-serif text-secondary">Rs. {Number(selectedOrder.totalAmount).toLocaleString()}</span>
               </div>

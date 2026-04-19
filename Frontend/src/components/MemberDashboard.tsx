@@ -6,6 +6,7 @@ import { Badge } from "./ui/badge";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { venueAPI, Booking } from "../api/venue";
 import { promotionsAPI, Promotion } from "../api/promotions";
+import api from "../api/axios";
 import { toast } from "sonner@2.0.3";
 
 interface MemberDashboardProps {
@@ -24,13 +25,13 @@ export function MemberDashboard({ userName, onNavigate, onLogout }: MemberDashbo
     const fetchDashboardData = async () => {
       try {
         const [bookings, profileResponse, promos] = await Promise.all([
-          venueAPI.getMyBookings(),
-          import('../api/axios').then(m => m.default.get('/auth/me')),
-          promotionsAPI.getAll().catch(() => [])
+          venueAPI.getMyBookings().catch(() => [] as Booking[]),
+          api.get('auth/me').catch(() => ({ data: { user: { loyaltyPoints: 0 } } })),
+          promotionsAPI.getAll().catch(() => [] as Promotion[])
         ]);
         setUpcomingBookings(bookings.slice(0, 5));
         setLoyaltyPoints(profileResponse.data.user.loyaltyPoints || 0);
-        setRecentPromotions(promos.slice(0, 3));
+        setRecentPromotions(promos.filter((p: Promotion) => p.isActive).slice(0, 3));
       } catch (error) {
         // Silent failure on poll
       } finally {

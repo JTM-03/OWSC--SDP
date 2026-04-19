@@ -410,3 +410,19 @@ Argument `nic` is missing.
     at async D:\restaurant-management-system\backend\src\routes\auth.js:49:26
     at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
     at async D:\restaurant-management-system\backend\src\routes\auth.js:48:24
+
+[2026-04-15T10:54:54.795Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:73:19
+
+[2026-04-15T10:55:00.867Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:73:19
+
+[2026-04-15T10:58:02.084Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:73:19
+
+[2026-04-15T11:01:45.428Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:73:19

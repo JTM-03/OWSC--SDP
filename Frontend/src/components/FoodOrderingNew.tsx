@@ -1,9 +1,3 @@
-import image_f71919f55545e0b2e304de8c2304372a8e5dc0f1 from 'figma:asset/f71919f55545e0b2e304de8c2304372a8e5dc0f1.png';
-import image_a2235e0be91c8a429694b55c15465c0eeeadc8da from 'figma:asset/a2235e0be91c8a429694b55c15465c0eeeadc8da.png';
-import image_123371414d98a3cea5f4c83669ef23e200519f33 from 'figma:asset/123371414d98a3cea5f4c83669ef23e200519f33.png';
-import softDrinkImage from 'figma:asset/705c5ff88ba381a18cfab1193e3091cbf620c813.png';
-import beefKottuImage from 'figma:asset/397282a1c0d10719e542f516204ae8a864e780db.png';
-import fruitJuiceImage from 'figma:asset/ae78ae4fc8f42c7dff16ad24d77ed0a01e5eb981.png';
 import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingCart, Trash2, Search, CheckCircle2, Tag, UtensilsCrossed, CreditCard, Wallet, Upload, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -61,6 +55,13 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [orderType, setOrderType] = useState<"dine-in" | "takeaway">("dine-in");
 
+  // ── Validation constants ──────────────────────────────────────────────────
+  const CASH_ORDER_CAP = 5000;          // Rs. 5,000 — cash not available above this
+  const QUANTITY_WARN_THRESHOLD = 10;   // warn if a single item exceeds this
+
+  // Quantity warning modal state
+  const [pendingCartAdd, setPendingCartAdd] = useState<{ item: MenuItem; newQty: number } | null>(null);
+
   const SERVICE_CHARGE_RATE = 0.10; // 10% Service Charge
   const [onlinePaymentType, setOnlinePaymentType] = useState<string>("");
   const [paymentDetails, setPaymentDetails] = useState({
@@ -74,13 +75,14 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
       try {
         const data = await menuAPI.getAllItems();
         // Map API data to component MenuItem interface
+        // Images and descriptions come directly from the admin portal (MenuManagement)
         const mappedData: MenuItem[] = data.map(item => ({
           id: item.id,
           name: item.name,
           category: item.category.toLowerCase(),
           price: item.price,
-          image: getImageUrl(item.imageUrl) || "https://images.unsplash.com/photo-1581184953987-5668072c8420?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaGlja2VuJTIwcmljZSUyMGFzaWFufGVufDF8fHx8MTc2MDg3OTg3M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
-          description: item.description || `Delicious ${item.name} from our ${item.category} menu.`,
+          image: getImageUrl(item.imageUrl) ?? "",
+          description: item.description || '',
           inStock: item.availabilityStatus === 'Available'
         }));
         setMenuItems(mappedData);
@@ -119,6 +121,19 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
       return;
     }
 
+    const existingItem = cart.find(cartItem => cartItem.id === item.id);
+    const newQty = existingItem ? existingItem.quantity + 1 : 1;
+
+    // Soft warning for high quantities
+    if (newQty > QUANTITY_WARN_THRESHOLD) {
+      setPendingCartAdd({ item, newQty });
+      return;
+    }
+
+    applyCartAdd(item);
+  };
+
+  const applyCartAdd = (item: MenuItem) => {
     const existingItem = cart.find(cartItem => cartItem.id === item.id);
     if (existingItem) {
       setCart(cart.map(cartItem =>
@@ -182,6 +197,7 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
     try {
       await orderAPI.createOrder({
         orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in',
+        paymentMethod: 'cash',
         items: cart.map(item => ({
           menuItemId: item.id,
           quantity: item.quantity
@@ -209,7 +225,8 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
     if (paymentMethod === 'cash') {
       try {
         await orderAPI.createOrder({
-          orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in', 
+          orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in',
+          paymentMethod: 'cash',
           items: cart.map(item => ({
             menuItemId: item.id,
             quantity: item.quantity
@@ -249,6 +266,7 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
     try {
       await orderAPI.createOrder({
         orderType: orderType === 'takeaway' ? 'Takeaway' : 'Dine-in',
+        paymentMethod: 'online',
         items: cart.map(item => ({
           menuItemId: item.id,
           quantity: item.quantity
@@ -289,6 +307,42 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
 
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-8">
+
+      {/* ── Quantity warning modal ── */}
+      {pendingCartAdd && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-amber-600 text-xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900">Large Quantity</h3>
+                <p className="text-sm text-slate-500">Please confirm this order</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              You are ordering <strong>{pendingCartAdd.newQty}×</strong>{' '}
+              <strong>{pendingCartAdd.item.name}</strong>. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setPendingCartAdd(null)}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { applyCartAdd(pendingCartAdd.item); setPendingCartAdd(null); }}
+                className="flex-1 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Yes, Add It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-primary text-white shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-6 py-6">
@@ -578,18 +632,28 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
                       <div className="space-y-3">
                         <Label className="text-base font-semibold">Select Payment Method</Label>
                         <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                          <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-accent cursor-pointer">
-                            <RadioGroupItem value="cash" id="cash" />
-                            <Label htmlFor="cash" className="flex-1 cursor-pointer">
-                              <div className="flex items-center gap-2">
-                                <Wallet className="w-5 h-5 text-primary" />
-                                <div>
-                                  <p className="font-medium">Cash Payment</p>
-                                  <p className="text-sm text-muted-foreground">Pay when you receive your order</p>
+                          {/* Cash only shown when order total is under Rs. 5,000 */}
+                          {getTotalPrice() * (orderType === 'dine-in' ? 1.1 : 1) <= CASH_ORDER_CAP ? (
+                            <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-accent cursor-pointer">
+                              <RadioGroupItem value="cash" id="cash" />
+                              <Label htmlFor="cash" className="flex-1 cursor-pointer">
+                                <div className="flex items-center gap-2">
+                                  <Wallet className="w-5 h-5 text-primary" />
+                                  <div>
+                                    <p className="font-medium">Cash Payment</p>
+                                    <p className="text-sm text-muted-foreground">Pay when you receive your order</p>
+                                  </div>
                                 </div>
+                              </Label>
+                            </div>
+                          ) : (
+                            <div className="p-3 border border-amber-200 rounded-lg bg-amber-50">
+                              <div className="flex items-center gap-2 text-amber-700">
+                                <Wallet className="w-4 h-4 flex-shrink-0" />
+                                <p className="text-sm font-medium">Cash not available for orders over Rs. {CASH_ORDER_CAP.toLocaleString()}</p>
                               </div>
-                            </Label>
-                          </div>
+                            </div>
+                          )}
                           <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-accent cursor-pointer">
                             <RadioGroupItem value="online" id="online" />
                             <Label htmlFor="online" className="flex-1 cursor-pointer">
@@ -655,22 +719,37 @@ export function FoodOrdering({ onBack }: FoodOrderingProps) {
 
               <div className="space-y-4 py-6">
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <Card className={`cursor-pointer transition-all ${paymentMethod === 'cash' ? 'border-secondary border-2' : ''}`}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center space-x-4">
-                        <RadioGroupItem value="cash" id="cash" />
-                        <Label htmlFor="cash" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <Wallet className="w-8 h-8 text-secondary" />
-                            <div>
-                              <h4 className="text-foreground">Cash on Pickup</h4>
-                              <p className="text-sm text-muted-foreground">Pay when you collect your order</p>
+                  {/* Cash on Pickup — only shown when order total is under Rs. 5,000 */}
+                  {getTotalPrice() * (orderType === 'dine-in' ? 1.1 : 1) <= CASH_ORDER_CAP ? (
+                    <Card className={`cursor-pointer transition-all ${paymentMethod === 'cash' ? 'border-secondary border-2' : ''}`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-center space-x-4">
+                          <RadioGroupItem value="cash" id="cash-dialog" />
+                          <Label htmlFor="cash-dialog" className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <Wallet className="w-8 h-8 text-secondary" />
+                              <div>
+                                <h4 className="text-foreground">Cash on Pickup</h4>
+                                <p className="text-sm text-muted-foreground">Pay when you collect your order</p>
+                              </div>
                             </div>
+                          </Label>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-amber-200 bg-amber-50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 text-amber-700">
+                          <Wallet className="w-6 h-6 flex-shrink-0" />
+                          <div>
+                            <p className="font-semibold text-sm">Cash not available</p>
+                            <p className="text-xs text-amber-600">Orders over Rs. {CASH_ORDER_CAP.toLocaleString()} require digital payment</p>
                           </div>
-                        </Label>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   <Card className={`cursor-pointer transition-all ${paymentMethod === 'online' ? 'border-secondary border-2' : ''}`}>
                     <CardContent className="p-6">

@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Download, TrendingUp, Users, DollarSign, Package } from "lucide-react";
+import { ArrowLeft, Download, TrendingUp, Users, DollarSign, Package, FileSpreadsheet } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { adminAPI } from "../api/admin";
 import { Loader2 } from "lucide-react";
+import api from "../api/axios";
 
 interface ReportsProps {
   onBack: () => void;
@@ -19,6 +22,9 @@ export function Reports({ onBack }: ReportsProps) {
   const [timeRange, setTimeRange] = useState("week");
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportArea, setExportArea] = useState("members");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,8 +41,45 @@ export function Reports({ onBack }: ReportsProps) {
     fetchStats();
   }, [timeRange]);
 
-  const handleDownloadReport = () => {
-    toast.success("Report downloaded successfully");
+  const exportAreas = [
+    { id: "members", label: "Members Report", description: "All member details with membership info" },
+    { id: "bookings", label: "Venue Bookings Report", description: "All venue booking records" },
+    { id: "orders", label: "Food Orders Report", description: "All food & beverage orders" },
+    { id: "inventory", label: "Inventory Report", description: "Current stock levels & low stock items" },
+    { id: "revenue", label: "Revenue Report", description: "Revenue breakdown by date" },
+  ];
+
+  const handleExportReport = async () => {
+    setExporting(true);
+    try {
+      const response = await api.get(`admin/export/${exportArea}?range=${timeRange}`, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const areaLabel = exportAreas.find(a => a.id === exportArea)?.label || exportArea;
+      link.download = `OWSC_${areaLabel.replace(/\s+/g, '_')}_${dateStr}.csv`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Report downloaded successfully", {
+        description: `${areaLabel} has been exported as CSV`,
+      });
+      setExportDialogOpen(false);
+    } catch (error) {
+      toast.error("Failed to export report");
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -88,7 +131,7 @@ export function Reports({ onBack }: ReportsProps) {
 
             <Button
               className="bg-secondary text-primary hover:bg-secondary/90"
-              onClick={handleDownloadReport}
+              onClick={() => setExportDialogOpen(true)}
             >
               <Download className="w-4 h-4 mr-2" />
               Export Report
@@ -236,6 +279,86 @@ export function Reports({ onBack }: ReportsProps) {
         )}
 
       </div>
+
+      {/* Export Report Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="p-6 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-secondary" />
+              Export Report
+            </DialogTitle>
+            <DialogDescription>
+              Choose the report area you want to download as CSV
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="space-y-2">
+              <Label>Report Area *</Label>
+              <Select value={exportArea} onValueChange={setExportArea}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select report area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exportAreas.map(area => (
+                    <SelectItem key={area.id} value={area.id}>
+                      {area.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Time Range</Label>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Preview description */}
+            <div className="bg-muted/50 p-4 rounded-lg border text-sm">
+              <p className="font-medium text-primary mb-1">
+                {exportAreas.find(a => a.id === exportArea)?.label}
+              </p>
+              <p className="text-muted-foreground">
+                {exportAreas.find(a => a.id === exportArea)?.description}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                File will be downloaded as CSV format
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="p-6 border-t bg-muted/20">
+            <Button variant="outline" onClick={() => setExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-secondary text-primary hover:bg-secondary/90 font-bold"
+              onClick={handleExportReport}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download CSV
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

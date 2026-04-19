@@ -244,9 +244,10 @@ export function MyBookings({ onBack }: MyBookingsProps) {
                                     <Button
                                         variant="destructive"
                                         onClick={async () => {
-                                            if (confirm("Are you sure you want to cancel this booking?")) {
+                                            const reason = prompt("Please provide a reason for cancelling this booking (optional):");
+                                            if (reason !== null) {
                                                 try {
-                                                    await venueAPI.cancelBooking(selectedBooking.id);
+                                                    await venueAPI.cancelBookingWithReason(selectedBooking.id, reason);
                                                     toast.success("Booking cancelled successfully");
                                                     setSelectedBooking(null);
                                                     // Refetch

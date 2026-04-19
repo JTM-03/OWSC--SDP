@@ -13,15 +13,20 @@ export interface OrderItem {
 export interface Order {
     id: number;
     memberId: number;
+    staffId?: number | null;
+    staff?: { id: number; fullName: string; username: string } | null;
+    member?: { id: number; fullName: string; email: string } | null;
     orderType: 'Dine-in' | 'Takeaway';
     orderDate: string;
     orderStatus: string;
+    subtotalAmount?: number;
+    serviceFee?: number;
     totalAmount: number;
     orderItems?: OrderItem[];
 }
 
 export const orderAPI = {
-    createOrder: async (data: { orderType: string; items: { menuItemId: number; quantity: number }[] }): Promise<{ message: string; order: Order }> => {
+    createOrder: async (data: { orderType: string; paymentMethod?: string; items: { menuItemId: number; quantity: number }[] }): Promise<{ message: string; order: Order }> => {
         const response = await api.post('orders', data);
         return response.data;
     },

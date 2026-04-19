@@ -4,14 +4,15 @@ const { UnauthorizedError, ForbiddenError } = require('../utils/errors')
 
 async function authenticate(req, res, next) {
     try {
-        // Extract token from Authorization header
-        const authHeader = req.headers.authorization
+        // Read token from HttpOnly cookie first, fall back to Authorization header
+        const token = req.cookies?.token
+            || (req.headers.authorization?.startsWith('Bearer ')
+                ? req.headers.authorization.substring(7)
+                : null)
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!token) {
             throw new UnauthorizedError('No token provided')
         }
-
-        const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
@@ -33,13 +34,14 @@ async function authenticate(req, res, next) {
             throw new UnauthorizedError('User not found')
         }
 
-        if (user.status !== 'Active') {
-            throw new UnauthorizedError('Account is not active')
+        // Only block explicitly suspended or inactive accounts.
+        // 'Pending' members can still log in — they just won't have an active membership.
+        // Admin approves their membership separately; blocking login here is too aggressive.
+        if (user.status === 'Suspended' || user.status === 'Inactive') {
+            throw new UnauthorizedError('Account has been suspended or deactivated')
         }
 
-        // Attach user to request
         req.user = user
-
         next()
     } catch (error) {
         if (error.name === 'JsonWebTokenError') {
@@ -69,25 +71,22 @@ function requireRole(...allowedRoles) {
 // Optional authentication - doesn't fail if no token
 async function optionalAuth(req, res, next) {
     try {
-        const authHeader = req.headers.authorization
+        const token = req.cookies?.token
+            || (req.headers.authorization?.startsWith('Bearer ')
+                ? req.headers.authorization.substring(7)
+                : null)
 
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.substring(7)
+        if (token) {
             const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
             const user = await prisma.member.findUnique({
                 where: { id: decoded.id },
                 select: { id: true, fullName: true, email: true, username: true, role: true }
             })
-
-            if (user) {
-                req.user = user
-            }
+            if (user) req.user = user
         }
     } catch (error) {
         // Silently fail for optional auth
     }
-
     next()
 }
 

@@ -13,9 +13,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { toast } from "sonner@2.0.3";
 import { useEffect } from "react";
 import { authAPI, User as AuthUser } from "../api/auth";
-import { membershipAPI, MembershipPlan } from "../api/membership"; // Import membershipAPI
+import { membershipAPI, MembershipPlan } from "../api/membership";
+import api from "../api/axios";
 import { Loader2 } from "lucide-react";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
+import { getImageUrl } from "../utils/image";
 
 interface MemberProfileProps {
   onBack: () => void;
@@ -122,7 +124,7 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
           emergencyPhone: user.emergencyPhone || "",
           nic: user.nic || "",
           username: user.username,
-          profileImage: (user as any).profileImageUrl ? `http://localhost:5000${(user as any).profileImageUrl}` : "",
+          profileImage: (user as any).profileImageUrl ? getImageUrl((user as any).profileImageUrl) || "" : "",
         };
 
         setMemberData(mappedData);
@@ -228,6 +230,17 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
   const MembershipIcon = activeMembershipConfig?.icon || User; // Default to User icon if undefined
 
   const handleSaveProfile = async () => {
+    // Phone validation
+    const phoneRegex = /^0\d{9}$/;
+    if (editForm.phone && !phoneRegex.test(editForm.phone)) {
+      toast.error("Phone number must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
+      return;
+    }
+    if (editForm.emergencyPhone && !phoneRegex.test(editForm.emergencyPhone)) {
+      toast.error("Emergency phone must be exactly 10 digits and start with 07");
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await authAPI.updateProfile({
@@ -306,22 +319,13 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/membership/upgrade-request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          newPlanId: upgradeRequest.requestedType,
-          reason: upgradeRequest.reason
-        })
+      const response = await api.post('membership/upgrade-request', {
+        newPlanId: upgradeRequest.requestedType,
+        reason: upgradeRequest.reason
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit upgrade request');
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(response.data?.error || 'Failed to submit upgrade request');
       }
 
       setUpgradeStatus('pending');
@@ -403,22 +407,13 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
       setLoading(true);
       const formData = new FormData();
       formData.append('image', selectedImage);
-      
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/auth/me/picture', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-      
-      if (!response.ok) throw new Error('Upload failed');
-      const data = await response.json();
-      
+
+      const response = await api.post('auth/me/picture', formData);
+      const data = response.data;
+
       setMemberData(prev => ({
         ...prev,
-        profileImage: `http://localhost:5000${data.profileImageUrl}`
+        profileImage: getImageUrl(data.profileImageUrl) || ""
       }));
       
       toast.success("Profile image updated", {
@@ -500,7 +495,7 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
                 <div className="flex flex-col items-center text-center">
                   <div className="relative">
                     <Avatar className="w-32 h-32">
-                      <AvatarImage src={memberData.profileImage} />
+                      <AvatarImage src={memberData.profileImage || undefined} />
                       <AvatarFallback className="bg-secondary text-primary text-3xl">
                         {getInitials(memberData.name)}
                       </AvatarFallback>
@@ -925,7 +920,7 @@ export function MemberProfile({ onBack }: MemberProfileProps) {
               <div className="flex flex-col items-center gap-6">
                 <div className="relative group cursor-pointer outline-none">
                   <Avatar className="w-32 h-32 border-4 border-muted shadow-md">
-                    <AvatarImage src={selectedImage ? URL.createObjectURL(selectedImage) : (memberData.profileImage || '')} />
+                    <AvatarImage src={selectedImage ? URL.createObjectURL(selectedImage) : (memberData.profileImage || undefined)} />
                     <AvatarFallback className="bg-secondary text-primary text-3xl font-serif">
                       {getInitials(memberData.name)}
                     </AvatarFallback>

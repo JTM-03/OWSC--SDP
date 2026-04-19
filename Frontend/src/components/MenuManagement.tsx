@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, UtensilsCrossed, Search, Plus, Edit, Trash2, Image as ImageIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, UtensilsCrossed, Search, Plus, Edit, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -73,12 +73,12 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
 
   const getCategoryBadge = (category: string) => {
     const categoryConfig: Record<string, { label: string, className: string }> = {
-      starters: { label: "Starters", className: "bg-blue-100 text-blue-800 border-blue-200" },
-      mains: { label: "Mains", className: "bg-purple-100 text-purple-800 border-purple-200" },
-      desserts: { label: "Desserts", className: "bg-pink-100 text-pink-800 border-pink-200" },
-      beverages: { label: "Beverages", className: "bg-green-100 text-green-800 border-green-200" },
+      starters: { label: "Starters", className: "bg-blue-100 text-blue-800 border-blue-300" },
+      mains:    { label: "Mains",    className: "bg-violet-100 text-violet-800 border-violet-300" },
+      desserts: { label: "Desserts", className: "bg-pink-100 text-pink-800 border-pink-300" },
+      beverages:{ label: "Beverages",className: "bg-teal-100 text-teal-800 border-teal-300" },
     };
-    return categoryConfig[category.toLowerCase()] || { label: category, className: "bg-gray-100 text-gray-800" };
+    return categoryConfig[category.toLowerCase()] || { label: category, className: "bg-gray-100 text-gray-800 border-gray-300" };
   };
 
   const resetForm = () => {
@@ -107,7 +107,7 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
       price: item.price,
       category: item.category as any,
       available: item.availabilityStatus === 'Available',
-      image: item.imageUrl || "",
+      image: item.imageUrl || "",   // keep as-is for the input field
       popular: item.isPopular || false,
       imageFile: null,
     });
@@ -143,7 +143,7 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
           category: formData.category,
           price: formData.price,
           description: formData.description,
-          imageUrl: formData.image,
+          imageUrl: formData.image || undefined,  // don't send empty string
           isPopular: formData.popular,
           availabilityStatus: formData.available ? 'Available' : 'Unavailable'
         });
@@ -179,7 +179,7 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
           category: formData.category,
           price: formData.price,
           description: formData.description,
-          imageUrl: formData.image,
+          imageUrl: formData.image || undefined,  // don't send empty string
           isPopular: formData.popular,
           availabilityStatus: formData.available ? 'Available' : 'Unavailable'
         });
@@ -368,77 +368,116 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
                   const categoryBadge = getCategoryBadge(item.category as any);
                   const isAvailable = item.availabilityStatus === 'Available';
                   return (
-                    <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="aspect-video w-full bg-muted relative overflow-hidden">
+                    <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
+                      {/* Image Section with Fixed Aspect Ratio */}
+                      <div className="aspect-video w-full bg-muted relative overflow-hidden flex-shrink-0">
                         <ImageWithFallback
                           src={getImageUrl(item.imageUrl)}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
                         {item.isPopular && (
-                          <Badge className="absolute top-2 right-2 bg-secondary text-primary">
+                          <Badge className="absolute top-3 right-3 bg-secondary text-primary font-semibold shadow-md">
                             Popular
                           </Badge>
                         )}
                       </div>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start gap-2">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg">{item.name}</CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {item.description}
+
+                      {/* Content Section - Grows to fill space */}
+                      <div className="flex flex-col flex-1">
+                        <CardHeader className="pb-4 space-y-3">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg leading-tight mb-2">{item.name}</CardTitle>
+                              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                {item.description}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Badges with Better Spacing */}
+                          <div className="flex items-center gap-2 pt-2">
+                            <Badge 
+                              variant="outline" 
+                              className={`${categoryBadge.className} font-medium`}
+                            >
+                              {categoryBadge.label}
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={
+                                isAvailable
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-300 font-medium"
+                                  : "bg-rose-50 text-rose-700 border-rose-300 font-medium"
+                              }
+                            >
+                              {item.availabilityStatus}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+
+                        {/* Price and Actions - Pushed to bottom */}
+                        <CardContent className="pt-0 mt-auto">
+                          {/* Price with Better Contrast */}
+                          <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                            <p className="text-2xl font-bold text-amber-700">
+                              Rs. {item.price.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-mono">
+                              ID: {item.id}
                             </p>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className={categoryBadge.className}>
-                            {categoryBadge.label}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={
-                              isAvailable
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : "bg-red-100 text-red-800 border-red-200"
-                            }
-                          >
-                            {item.availabilityStatus}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-secondary text-xl">Rs. {item.price.toLocaleString()}</p>
-                          <p className="text-xs text-muted-foreground"># {item.id}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => openEditDialog(item)}
-                          >
-                            <Edit className="w-3 h-3 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className={`flex-1 ${isAvailable ? '' : 'bg-green-50'}`}
-                            onClick={() => toggleAvailability(item)}
-                          >
-                            {isAvailable ? "Mark Unavailable" : "Mark Available"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => openDeleteDialog(item)}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </CardContent>
+
+                          {/* Action Buttons with Better Hierarchy */}
+                          <div className="flex flex-col gap-2">
+                            {/* Primary Actions Row */}
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                                onClick={() => openEditDialog(item)}
+                              >
+                                <Edit className="w-3.5 h-3.5 mr-1.5" />
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={isAvailable ? "outline" : "default"}
+                                className={
+                                  isAvailable 
+                                    ? "flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300" 
+                                    : "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                }
+                                onClick={() => toggleAvailability(item)}
+                              >
+                                {isAvailable ? (
+                                  <>
+                                    <ToggleLeft className="w-3.5 h-3.5 mr-1.5" />
+                                    Unavailable
+                                  </>
+                                ) : (
+                                  <>
+                                    <ToggleRight className="w-3.5 h-3.5 mr-1.5" />
+                                    Available
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+
+                            {/* Destructive Action Row */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/30 hover:border-destructive"
+                              onClick={() => openDeleteDialog(item)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                              Delete Item
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </div>
                     </Card>
                   );
                 })

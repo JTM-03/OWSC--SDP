@@ -3,8 +3,84 @@ const prisma = require("../lib/prisma")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { z } = require('zod')
 const { validate } = require("../middleware/validate")
+const { parsePagination, paginationMeta } = require("../utils/pagination")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /events:
+ *   get:
+ *     summary: List all events with pagination
+ *     tags: [Events]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [Upcoming, Completed, Cancelled] }
+ *     responses:
+ *       200:
+ *         description: Paginated events
+ *   post:
+ *     summary: Create a new event (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, description, date, time, location]
+ *             properties:
+ *               title:        { type: string }
+ *               description:  { type: string }
+ *               date:         { type: string, format: date-time }
+ *               time:         { type: string, example: "18:00" }
+ *               location:     { type: string }
+ *               imageUrl:     { type: string }
+ *               ticketPrice:  { type: number }
+ *               category:     { type: string }
+ *               totalTickets: { type: integer }
+ *               status:       { type: string, enum: [Upcoming, Completed, Cancelled] }
+ *     responses:
+ *       201:
+ *         description: Event created
+ *
+ * /events/{id}:
+ *   put:
+ *     summary: Update an event (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Event updated
+ *   delete:
+ *     summary: Delete an event (Admin)
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Event deleted
+ */
 
 const eventSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -22,10 +98,22 @@ const eventSchema = z.object({
 // GET /api/events - List all events
 router.get("/", async (req, res, next) => {
     try {
-        const events = await prisma.event.findMany({
-            orderBy: { date: 'asc' }
-        })
-        res.json(events)
+        const { skip, take, page, limit } = parsePagination(req.query)
+        const { status } = req.query
+
+        const where = status ? { status } : {}
+
+        const [events, total] = await Promise.all([
+            prisma.event.findMany({
+                where,
+                orderBy: { date: 'asc' },
+                skip,
+                take,
+            }),
+            prisma.event.count({ where })
+        ])
+
+        res.json({ data: events, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }

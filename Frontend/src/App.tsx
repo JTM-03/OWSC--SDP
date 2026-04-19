@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getAuthToken, getStoredUser } from "./api/auth";
+import { getStoredUser } from "./api/auth";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { StaffLoginPage } from "./components/StaffLoginPage";
@@ -44,11 +44,9 @@ export default function App() {
 
   useEffect(() => {
     const storedUser = getStoredUser();
-    const token = getAuthToken();
-    if (storedUser && token) {
+    if (storedUser) {
       setUser(storedUser);
       setUserType(storedUser.role);
-      // Keep on landing page on refresh
     }
   }, []);
 

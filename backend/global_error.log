@@ -3392,3 +3392,1097 @@ Unknown field `profileImageUrl` for select statement on model `Member`. Availabl
     at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
     at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
     at async D:\restaurant-management-system\backend\src\routes\auth.js:196:22
+
+[2026-04-12T20:23:29.540Z] 500 ERROR: POST /api/membership/upgrade-request
+PrismaClientValidationError: 
+Invalid `prisma.membershipUpgradeRequest.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\memberships.js:196:63
+
+  193     throw new BadRequestError('You already have a pending upgrade request')
+  194 }
+  195 
+→ 196 const request = await prisma.membershipUpgradeRequest.create({
+        data: {
+          memberId: 10,
+          newPlanId: "lifetime",
+          status: "Pending",
+      +   oldPlanId: String
+        }
+      })
+
+Argument `oldPlanId` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\memberships.js:196:25
+
+[2026-04-13T03:24:17.651Z] 500 ERROR: PUT /api/venues/bookings/2
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:408:51
+
+  405     updateData.cancellationReason = cancellationReason;
+  406 }
+  407 
+→ 408 const booking = await prisma.venueBooking.update({
+        where: {
+          id: 2
+        },
+        data: {
+          bookingStatus: "Cancelled",
+          cancellationReason: "Another booking is on the day",
+          ~~~~~~~~~~~~~~~~~~
+      ?   bookingDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   timeSlot?: String | StringFieldUpdateOperationsInput,
+      ?   purpose?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   createdDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   member?: MemberUpdateOneRequiredWithoutVenueBookingsNestedInput,
+      ?   venue?: VenueUpdateOneRequiredWithoutBookingsNestedInput,
+      ?   payments?: BookingPaymentUpdateManyWithoutBookingNestedInput,
+      ?   feedback?: VenueFeedbackUpdateOneWithoutBookingNestedInput
+        },
+        include: {
+          venue: true,
+          member: true
+        }
+      })
+
+Unknown argument `cancellationReason`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:408:25
+
+[2026-04-13T03:24:19.695Z] 500 ERROR: PUT /api/venues/bookings/2
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.update()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:408:51
+
+  405     updateData.cancellationReason = cancellationReason;
+  406 }
+  407 
+→ 408 const booking = await prisma.venueBooking.update({
+        where: {
+          id: 2
+        },
+        data: {
+          bookingStatus: "Cancelled",
+          cancellationReason: "Another booking is on the day",
+          ~~~~~~~~~~~~~~~~~~
+      ?   bookingDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   timeSlot?: String | StringFieldUpdateOperationsInput,
+      ?   purpose?: String | NullableStringFieldUpdateOperationsInput | Null,
+      ?   createdDate?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   member?: MemberUpdateOneRequiredWithoutVenueBookingsNestedInput,
+      ?   venue?: VenueUpdateOneRequiredWithoutBookingsNestedInput,
+      ?   payments?: BookingPaymentUpdateManyWithoutBookingNestedInput,
+      ?   feedback?: VenueFeedbackUpdateOneWithoutBookingNestedInput
+        },
+        include: {
+          venue: true,
+          member: true
+        }
+      })
+
+Unknown argument `cancellationReason`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:408:25
+
+[2026-04-13T12:10:41.436Z] 500 ERROR: GET /api/admin/export/bookings?range=week
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\admin.js:278:60
+
+  275 }
+  276 
+  277 case 'bookings': {
+→ 278     const bookings = await prisma.venueBooking.findMany({
+            include: {
+              member: {
+                select: {
+                  fullName: true,
+                  email: true,
+                  phone: true
+                }
+              },
+              venue: {
+                select: {
+                  name: true,
+                  location: true,
+                  ~~~~~~~~
+          ?       id?: true,
+          ?       capacity?: true,
+          ?       facilities?: true,
+          ?       atmosphere?: true,
+          ?       charge?: true,
+          ?       isAvailable?: true,
+          ?       imageUrl?: true,
+          ?       bookings?: true,
+          ?       assignments?: true,
+          ?       _count?: true
+                }
+              }
+            },
+            orderBy: {
+              bookingDate: "desc"
+            }
+          })
+
+Unknown field `location` for select statement on model `Venue`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\admin.js:278:34
+
+[2026-04-13T12:10:43.051Z] 500 ERROR: GET /api/admin/export/bookings?range=week
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\admin.js:278:60
+
+  275 }
+  276 
+  277 case 'bookings': {
+→ 278     const bookings = await prisma.venueBooking.findMany({
+            include: {
+              member: {
+                select: {
+                  fullName: true,
+                  email: true,
+                  phone: true
+                }
+              },
+              venue: {
+                select: {
+                  name: true,
+                  location: true,
+                  ~~~~~~~~
+          ?       id?: true,
+          ?       capacity?: true,
+          ?       facilities?: true,
+          ?       atmosphere?: true,
+          ?       charge?: true,
+          ?       isAvailable?: true,
+          ?       imageUrl?: true,
+          ?       bookings?: true,
+          ?       assignments?: true,
+          ?       _count?: true
+                }
+              }
+            },
+            orderBy: {
+              bookingDate: "desc"
+            }
+          })
+
+Unknown field `location` for select statement on model `Venue`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\admin.js:278:34
+
+[2026-04-14T18:29:52.929Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:475:52
+
+  472 // Only show non-cancelled bookings
+  473 whereClause.bookingStatus = { not: 'Cancelled' };
+  474 
+→ 475 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:475:26
+
+[2026-04-14T18:32:21.130Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:475:52
+
+  472 // Only show non-cancelled bookings
+  473 whereClause.bookingStatus = { not: 'Cancelled' };
+  474 
+→ 475 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:475:26
+
+[2026-04-14T18:44:43.988Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:475:52
+
+  472 // Only show non-cancelled bookings
+  473 whereClause.bookingStatus = { not: 'Cancelled' };
+  474 
+→ 475 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:475:26
+
+[2026-04-14T18:50:45.011Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:475:52
+
+  472 // Only show non-cancelled bookings
+  473 whereClause.bookingStatus = { not: 'Cancelled' };
+  474 
+→ 475 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:475:26
+
+[2026-04-14T19:09:57.833Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:547:52
+
+  544 // Only show non-cancelled bookings
+  545 whereClause.bookingStatus = { not: 'Cancelled' };
+  546 
+→ 547 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:547:26
+
+[2026-04-14T19:17:32.997Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:547:52
+
+  544 // Only show non-cancelled bookings
+  545 whereClause.bookingStatus = { not: 'Cancelled' };
+  546 
+→ 547 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            }
+          }
+        },
+        orderBy: [
+          {
+            bookingDate: "asc"
+          },
+          {
+            timeSlot: "asc"
+          }
+        ]
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:547:26
+
+[2026-04-14T19:41:01.869Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31T18:30:00.000Z&endDate=2026-04-30T18:30:00.000Z
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:410:52
+
+  407     whereClause.venueId = parseInt(venueId);
+  408 }
+  409 
+→ 410 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T18:30:00.000Z"),
+            lte: new Date("2026-04-30T18:30:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            },
+            take: 1,
+            orderBy: {
+              paymentDate: "desc"
+            }
+          }
+        }
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:410:26
+
+[2026-04-15T06:41:09.847Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31&endDate=2026-04-29
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:410:52
+
+  407     whereClause.venueId = parseInt(venueId);
+  408 }
+  409 
+→ 410 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T00:00:00.000Z"),
+            lte: new Date("2026-04-29T00:00:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            },
+            take: 1,
+            orderBy: {
+              paymentDate: "desc"
+            }
+          }
+        }
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:410:26
+
+[2026-04-15T06:41:18.627Z] 500 ERROR: GET /api/venues/bookings/calendar?startDate=2026-03-31&endDate=2026-04-29
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findMany()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:410:52
+
+  407     whereClause.venueId = parseInt(venueId);
+  408 }
+  409 
+→ 410 const bookings = await prisma.venueBooking.findMany({
+        where: {
+          bookingDate: {
+            gte: new Date("2026-03-31T00:00:00.000Z"),
+            lte: new Date("2026-04-29T00:00:00.000Z")
+          },
+          bookingStatus: {
+            not: "Cancelled"
+          }
+        },
+        include: {
+          venue: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          member: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phone: true
+            }
+          },
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              receiptUrl: true,
+              ~~~~~~~~~~
+      ?       bookingId?: true,
+      ?       memberId?: true,
+      ?       transactionId?: true,
+      ?       paymentDate?: true,
+      ?       booking?: true,
+      ?       member?: true
+            },
+            take: 1,
+            orderBy: {
+              paymentDate: "desc"
+            }
+          }
+        }
+      })
+
+Unknown field `receiptUrl` for select statement on model `BookingPayment`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:410:26
+
+[2026-04-15T06:42:21.812Z] 500 ERROR: POST /api/venues/bookings
+PrismaClientValidationError: 
+Invalid `prisma.bookingPayment.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:202:57
+
+  199 });
+  200 
+  201 let receiptUrl = req.file ? `/uploads/${req.file.filename}` : null;
+→ 202 const payment = await prisma.bookingPayment.create({
+        data: {
+          bookingId: 3,
+          memberId: 10,
+          amount: 2000,
+          paymentMethod: "Bank Transfer",
+          paymentStatus: "Pending Verification",
+          paymentDate: new Date("2026-04-15T06:42:21.808Z"),
+          receiptUrl: "/uploads/1776235341785-400016993.jpg",
+          ~~~~~~~~~~
+      ?   id?: Int,
+      ?   transactionId?: String | Null
+        }
+      })
+
+Unknown argument `receiptUrl`. Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:202:29
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\venues.js:189:24
+
+[2026-04-15T11:19:10.995Z] 500 ERROR: POST /api/auth/register
+Error: CORS: origin http://localhost:3000 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-15T11:19:32.070Z] 500 ERROR: OPTIONS /api/auth/login
+Error: CORS: origin http://localhost:3000 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-15T11:19:38.742Z] 500 ERROR: OPTIONS /api/auth/login
+Error: CORS: origin http://localhost:3000 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-15T11:21:49.446Z] 500 ERROR: OPTIONS /api/auth/login
+Error: CORS: origin http://localhost:3000 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-15T11:27:44.437Z] 500 ERROR: POST /api/auth/login
+Error: CORS: origin http://localhost:3000 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-15T11:31:50.593Z] 500 ERROR: POST /api/auth/login
+Error: CORS: origin http://localhost:3001 not allowed
+    at origin (D:\restaurant-management-system\backend\src\app.js:28:18)
+    at D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (D:\restaurant-management-system\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (D:\restaurant-management-system\backend\node_modules\router\index.js:342:13)
+    at D:\restaurant-management-system\backend\node_modules\router\index.js:297:9
+    at processParams (D:\restaurant-management-system\backend\node_modules\router\index.js:582:12)
+    at next (D:\restaurant-management-system\backend\node_modules\router\index.js:291:5)
+    at logger (D:\restaurant-management-system\backend\node_modules\morgan\index.js:144:5)
+
+[2026-04-16T02:30:47.863Z] 500 ERROR: POST /api/orders
+PrismaClientValidationError: 
+Invalid `tx.order.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\orders.js:183:45
+
+  180 
+  181 // Create order with transactions
+  182 const order = await prisma.$transaction(async (tx) => {
+→ 183     const newOrder = await tx.order.create({
+            data: {
+              memberId: 2,
+              orderType: "Dine-in",
+              subtotalAmount: 1600,
+              ~~~~~~~~~~~~~~
+              serviceFee: 160,
+              totalAmount: 1760,
+              orderStatus: "Pending",
+              orderItems: {
+                create: [
+                  {
+                    menuItemId: 1,
+                    quantity: 1,
+                    unitPrice: new Prisma.Decimal("1600")
+                  }
+                ]
+              },
+          ?   id?: Int,
+          ?   restaurantTableId?: Int | Null,
+          ?   orderDate?: DateTime,
+          ?   specialInstructions?: String | Null,
+          ?   payments?: OrderPaymentUncheckedCreateNestedManyWithoutOrderInput
+            },
+            include: {
+              orderItems: {
+                include: {
+                  menuItem: true
+                }
+              }
+            }
+          })
+
+Unknown argument `subtotalAmount`. Did you mean `totalAmount`? Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:183:30
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:182:23
+
+[2026-04-16T02:40:34.635Z] 500 ERROR: POST /api/orders
+PrismaClientValidationError: 
+Invalid `tx.order.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\orders.js:183:45
+
+  180 
+  181 // Create order with transactions
+  182 const order = await prisma.$transaction(async (tx) => {
+→ 183     const newOrder = await tx.order.create({
+            data: {
+              memberId: 2,
+              orderType: "Dine-in",
+              subtotalAmount: 1600,
+              ~~~~~~~~~~~~~~
+              serviceFee: 160,
+              totalAmount: 1760,
+              orderStatus: "Pending",
+              orderItems: {
+                create: [
+                  {
+                    menuItemId: 1,
+                    quantity: 1,
+                    unitPrice: new Prisma.Decimal("1600")
+                  }
+                ]
+              },
+          ?   id?: Int,
+          ?   restaurantTableId?: Int | Null,
+          ?   orderDate?: DateTime,
+          ?   specialInstructions?: String | Null,
+          ?   payments?: OrderPaymentUncheckedCreateNestedManyWithoutOrderInput
+            },
+            include: {
+              orderItems: {
+                include: {
+                  menuItem: true
+                }
+              }
+            }
+          })
+
+Unknown argument `subtotalAmount`. Did you mean `totalAmount`? Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:183:30
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:182:23
+
+[2026-04-16T02:54:07.388Z] 500 ERROR: POST /api/orders
+PrismaClientValidationError: 
+Invalid `tx.order.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\orders.js:183:45
+
+  180 
+  181 // Create order with transactions
+  182 const order = await prisma.$transaction(async (tx) => {
+→ 183     const newOrder = await tx.order.create({
+            data: {
+              memberId: 2,
+              orderType: "Dine-in",
+              subtotalAmount: 1600,
+              ~~~~~~~~~~~~~~
+              serviceFee: 160,
+              totalAmount: 1760,
+              orderStatus: "Pending",
+              orderItems: {
+                create: [
+                  {
+                    menuItemId: 1,
+                    quantity: 1,
+                    unitPrice: new Prisma.Decimal("1600")
+                  }
+                ]
+              },
+          ?   id?: Int,
+          ?   restaurantTableId?: Int | Null,
+          ?   orderDate?: DateTime,
+          ?   specialInstructions?: String | Null,
+          ?   payments?: OrderPaymentUncheckedCreateNestedManyWithoutOrderInput
+            },
+            include: {
+              orderItems: {
+                include: {
+                  menuItem: true
+                }
+              }
+            }
+          })
+
+Unknown argument `subtotalAmount`. Did you mean `totalAmount`? Available options are marked with ?.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at async Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:9:32)
+    at async l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:183:30
+    at async Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at async D:\restaurant-management-system\backend\src\routes\orders.js:182:23
+
+[2026-04-16T08:33:12.231Z] 500 ERROR: PUT /api/menu/2
+TypeError: Cannot read properties of undefined (reading 'map')
+    at D:\restaurant-management-system\backend\src\middleware\validate.js:27:43
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at multerMiddleware (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:19:41)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at D:\restaurant-management-system\backend\src\middleware\auth.js:64:9
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at authenticate (D:\restaurant-management-system\backend\src\middleware\auth.js:42:9)

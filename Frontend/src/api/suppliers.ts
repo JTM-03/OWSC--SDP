@@ -12,7 +12,7 @@ export interface Supplier {
 export const supplierAPI = {
     getAll: async (): Promise<Supplier[]> => {
         const response = await api.get('suppliers');
-        return response.data;
+        return Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
     },
 
     create: async (data: Omit<Supplier, 'id'>): Promise<Supplier> => {

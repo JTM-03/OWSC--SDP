@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Checkbox } from "./ui/checkbox";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
-import { ArrowLeft, Upload, Building2, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Upload, Building2, Loader2, CheckCircle2, FileText, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription } from "./ui/alert";
 import { authAPI } from "../api/auth";
+import { TermsAndConditionsModal } from "./TermsAndConditionsModal";
 
 interface MemberRegistrationProps {
   onBack: () => void;
@@ -28,6 +29,8 @@ const membershipTypes = [
 export function MemberRegistration({ onBack, onRegistrationComplete, selectedMembership }: MemberRegistrationProps) {
   const [loading, setLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [ageError, setAgeError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -36,13 +39,27 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
     confirmPassword: "",
     phone: "",
     nic: "",
+    dateOfBirth: "",
     address: "",
     membershipType: selectedMembership || "",
     emergencyContact: "",
     emergencyPhone: "",
     paymentSlip: null as File | null,
+    nicImage: null as File | null,
     agreeTerms: false,
   });
+
+  // Calculate age from DOB string and return null if valid, error string if not
+  const calcAge = (dob: string): number | null => {
+    if (!dob) return null;
+    const birth = new Date(dob);
+    if (isNaN(birth.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +85,22 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
       return;
     }
 
+    if (!formData.dateOfBirth) {
+      toast.error("Please enter your date of birth");
+      return;
+    }
+
+    const age = calcAge(formData.dateOfBirth);
+    if (age === null || age < 21) {
+      toast.error("You must be at least 21 years old to become a member of OWSC.");
+      return;
+    }
+
+    if (!formData.nicImage) {
+      toast.error("Please upload a photo of your NIC / Passport");
+      return;
+    }
+
     setLoading(true);
     try {
       // Frontend Validations
@@ -84,9 +117,15 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
         return;
       }
 
-      const phoneRegex = /^07\d{8}$/;
+      const phoneRegex = /^0\d{9}$/;
       if (!phoneRegex.test(formData.phone)) {
-        toast.error("Mobile number must be exactly 10 digits and start with 07");
+        toast.error("Phone number must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
+        setLoading(false);
+        return;
+      }
+
+      if (formData.emergencyPhone && !phoneRegex.test(formData.emergencyPhone)) {
+        toast.error("Emergency contact number must be exactly 10 digits and start with 07");
         setLoading(false);
         return;
       }
@@ -99,12 +138,16 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
       submitData.append('phone', formData.phone);
       if (formData.address) submitData.append('address', formData.address);
       if (formData.nic) submitData.append('nic', formData.nic);
+      if (formData.dateOfBirth) submitData.append('dateOfBirth', formData.dateOfBirth);
       if (formData.emergencyContact) submitData.append('emergencyContact', formData.emergencyContact);
       if (formData.emergencyPhone) submitData.append('emergencyPhone', formData.emergencyPhone);
       submitData.append('membershipType', formData.membershipType);
       submitData.append('role', 'member');
       if (formData.paymentSlip instanceof File) {
         submitData.append('paymentSlip', formData.paymentSlip);
+      }
+      if (formData.nicImage instanceof File) {
+        submitData.append('nicImage', formData.nicImage);
       }
 
       await authAPI.register(submitData);
@@ -209,6 +252,62 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
                       required
                       placeholder="e.g., 199012345678"
                     />
+                  </div>
+                </div>
+
+                {/* Date of Birth + NIC Image */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      max={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        handleChange("dateOfBirth", e.target.value);
+                        const age = calcAge(e.target.value);
+                        if (age !== null && age < 21) {
+                          setAgeError(`You are ${age} years old. Minimum age to join is 21.`);
+                        } else {
+                          setAgeError(null);
+                        }
+                      }}
+                      required
+                      className={ageError ? "border-destructive ring-1 ring-destructive/40" : ""}
+                    />
+                    {ageError && (
+                      <div className="flex items-center gap-1.5 text-xs text-destructive mt-1">
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                        {ageError}
+                      </div>
+                    )}
+                    {formData.dateOfBirth && !ageError && calcAge(formData.dateOfBirth) !== null && (
+                      <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                        <CheckCircle2 className="w-3 h-3" /> Age: {calcAge(formData.dateOfBirth)} years
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="nicImage">NIC / Passport Photo *</Label>
+                    <div className="relative">
+                      <Input
+                        id="nicImage"
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => handleChange("nicImage", e.target.files ? e.target.files[0] : null)}
+                        required
+                        className="cursor-pointer"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <Upload className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                    {formData.nicImage && (
+                      <p className="text-xs text-secondary">Selected: {formData.nicImage.name}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">Upload a clear photo of your NIC or Passport</p>
                   </div>
                 </div>
 
@@ -420,23 +519,62 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
               </div>
 
               {/* Terms and Conditions */}
-              <div className="flex items-start space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={formData.agreeTerms}
-                  onCheckedChange={(checked) => handleChange("agreeTerms", checked as boolean)}
-                />
-                <Label htmlFor="terms" className="text-sm cursor-pointer">
-                  I agree to the terms and conditions of OWSC membership and understand that my application will be reviewed by the club administration.
-                </Label>
+              <div className="rounded-xl border border-border bg-muted/20 overflow-hidden">
+                {/* Header row */}
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold text-primary">Terms &amp; Conditions</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-3 text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                    onClick={() => setShowTermsModal(true)}
+                  >
+                    <FileText className="w-3 h-3" />
+                    View Terms
+                  </Button>
+                </div>
+
+                {/* Checkbox row — single inline sentence, large click target */}
+                <label
+                  htmlFor="terms"
+                  className="flex items-start gap-3 px-4 py-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                >
+                  <Checkbox
+                    id="terms"
+                    checked={formData.agreeTerms}
+                    onCheckedChange={(checked) => handleChange("agreeTerms", checked as boolean)}
+                    className="mt-0.5 flex-shrink-0 w-5 h-5"
+                  />
+                  <span className="text-sm text-foreground leading-relaxed select-none">
+                    I have read and agree to the{" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80"
+                      onClick={(e) => { e.preventDefault(); setShowTermsModal(true); }}
+                    >
+                      Terms &amp; Conditions
+                    </button>
+                    {" "}of OWSC membership. I understand my application will be reviewed by the club administration.
+                  </span>
+                </label>
               </div>
 
-              {/* Submit Button */}
-              <div className="flex gap-3">
+              <TermsAndConditionsModal
+                open={showTermsModal}
+                onClose={() => setShowTermsModal(false)}
+                onAgree={() => handleChange("agreeTerms", true)}
+              />
+
+              {/* Submit / Cancel */}
+              <div className="flex gap-3 pt-1">
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
                   onClick={onBack}
                   disabled={loading}
                 >
@@ -444,7 +582,7 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 bg-primary text-white hover:bg-primary/90"
+                  className="flex-2 bg-primary text-white hover:bg-primary/90 font-semibold px-8"
                   disabled={loading}
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -452,12 +590,12 @@ export function MemberRegistration({ onBack, onRegistrationComplete, selectedMem
                 </Button>
               </div>
 
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-sm text-muted-foreground text-center pt-1">
                 Already have an account?{" "}
                 <button
                   type="button"
                   onClick={onBack}
-                  className="text-secondary hover:underline"
+                  className="text-secondary font-medium hover:underline"
                 >
                   Sign in here
                 </button>

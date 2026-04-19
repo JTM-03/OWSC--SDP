@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
-import { authAPI, setAuthToken, setUser } from "../api/auth";
+import { authAPI, setUser } from "../api/auth";
 import { Loader2, ArrowLeft, ShieldCheck, Eye, EyeOff, AlertTriangle, X } from "lucide-react";
 
 interface StaffLoginPageProps {
@@ -35,11 +35,10 @@ export function StaffLoginPage({ onLogin, onBack }: StaffLoginPageProps) {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const { user, token } = await authAPI.login({
-        email: staffCredentials.username, // Assuming username is email or handled by backend
-        password: staffCredentials.password
+      const { user } = await authAPI.login({
+        email: staffCredentials.username.trim(),
+        password: staffCredentials.password.trim()
       });
-      setAuthToken(token);
       setUser(user);
       onLogin(user.role as any, user);
     } catch (error: any) {
@@ -60,11 +59,10 @@ export function StaffLoginPage({ onLogin, onBack }: StaffLoginPageProps) {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const { user, token } = await authAPI.login({
-        email: adminCredentials.username,
-        password: adminCredentials.password
+      const { user } = await authAPI.login({
+        email: adminCredentials.username.trim(),
+        password: adminCredentials.password.trim()
       });
-      setAuthToken(token);
       setUser(user);
       onLogin(user.role as any, user);
     } catch (error: any) {

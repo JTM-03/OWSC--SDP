@@ -47,10 +47,12 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   const [items, setItems] = useState<APIInventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "critical" | "low" | "good">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "low" | "good">("all");
   const [deliveryQuantity, setDeliveryQuantity] = useState("");
   const [deliverySupplierId, setDeliverySupplierId] = useState("");
   const [selectedItem, setSelectedItem] = useState<APIInventoryItem | null>(null);
+  const [adjustmentType, setAdjustmentType] = useState<'delivery' | 'used'>('delivery');
+  const [adjustmentReason, setAdjustmentReason] = useState("");
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newItem, setNewItem] = useState({
@@ -58,7 +60,8 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
     category: "Ingredients",
     unit: "kg",
     reorderLevel: "10",
-    initialQuantity: "0"
+    initialQuantity: "0",
+    supplierId: ""
   });
 
   const [returns, setReturns] = useState<any[]>([]);
@@ -100,13 +103,19 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
       return;
     }
 
+    if (!newItem.supplierId) {
+      toast.error("Please select a supplier");
+      return;
+    }
+
     try {
       await inventoryAPI.createProduct({
         productName: newItem.productName,
         category: newItem.category,
         unit: newItem.unit,
         reorderLevel: parseFloat(newItem.reorderLevel) || 10,
-        initialQuantity: parseFloat(newItem.initialQuantity) || 0
+        initialQuantity: parseFloat(newItem.initialQuantity) || 0,
+        supplierId: parseInt(newItem.supplierId)
       });
       toast.success("Product created successfully");
       setIsAddDialogOpen(false);
@@ -115,7 +124,8 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
         category: "Ingredients",
         unit: "kg",
         reorderLevel: "10",
-        initialQuantity: "0"
+        initialQuantity: "0",
+        supplierId: ""
       });
       fetchInventory();
     } catch (error) {
@@ -128,7 +138,7 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   const fetchInventory = async () => {
     try {
       const data = await inventoryAPI.getAll();
-      setItems(data);
+      setItems(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Failed to load inventory");
     } finally {
@@ -147,7 +157,7 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   const fetchReturns = async () => {
     try {
       const data = await inventoryAPI.getReturns();
-      setReturns(data);
+      setReturns(Array.isArray(data) ? data : []);
     } catch (error) {
       // silent error
     }
@@ -156,7 +166,7 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   const fetchDeliveries = async () => {
     try {
       const data = await deliveryAPI.getAll();
-      setDeliveries(data);
+      setDeliveries(Array.isArray(data) ? data : []);
     } catch (error) {
       // silent error
     }
@@ -213,16 +223,58 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   const fetchSuppliers = async () => {
     try {
       const data = await supplierAPI.getAll();
-      setSuppliers(data);
+      setSuppliers(Array.isArray(data) ? data : []);
     } catch (error) {
       // silent error if suppliers fail to load initially
     }
   };
 
   const handleCreateSupplier = async () => {
-    if (!newSupplier.name) {
-      toast.error("Supplier name is required");
+    // Validate name
+    if (!newSupplier.name || newSupplier.name.trim().length < 3) {
+      toast.error("Supplier name must be at least 3 characters");
       return;
+    }
+
+    if (newSupplier.name.trim().length > 100) {
+      toast.error("Supplier name must not exceed 100 characters");
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9\s&-]+$/.test(newSupplier.name)) {
+      toast.error("Supplier name can only contain letters, numbers, spaces, ampersand, and hyphens");
+      return;
+    }
+
+    // Validate contact person
+    if (newSupplier.contactPerson && newSupplier.contactPerson.trim().length < 1) {
+      toast.error("Contact person name is invalid");
+      return;
+    }
+
+    if (newSupplier.contactPerson && newSupplier.contactPerson.trim().length > 100) {
+      toast.error("Contact person name must not exceed 100 characters");
+      return;
+    }
+
+    // Validate email
+    if (newSupplier.email && newSupplier.email.trim().length > 0) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newSupplier.email)) {
+        toast.error("Invalid email address format");
+        return;
+      }
+      if (newSupplier.email.length > 100) {
+        toast.error("Email must not exceed 100 characters");
+        return;
+      }
+    }
+
+    // Validate phone
+    if (newSupplier.phone && newSupplier.phone.trim().length > 0) {
+      if (!/^0\d{9}$/.test(newSupplier.phone)) {
+        toast.error("Phone number must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
+        return;
+      }
     }
 
     try {
@@ -248,9 +300,8 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
   };
 
   const getStockStatus = (quantity: number, reorderLevel: number) => {
-    const percentage = (quantity / reorderLevel) * 100;
-    if (percentage <= 50) return { status: "Critical", color: "bg-red-500" };
-    if (percentage <= 100) return { status: "Low", color: "bg-orange-500" };
+    // Low stock means amount is lower than reorder level
+    if (quantity < reorderLevel) return { status: "Low", color: "bg-orange-500" };
     return { status: "Good", color: "bg-green-500" };
   };
 
@@ -265,26 +316,34 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
     return stockStatus.status.toLowerCase() === statusFilter;
   });
 
-  const handleRecordDelivery = async () => {
-    if (!selectedItem || !deliveryQuantity || !deliverySupplierId) {
-      toast.error("Please enter a valid quantity and select a supplier");
+  const handleUpdateStock = async () => {
+    if (!selectedItem || !deliveryQuantity) {
+      toast.error("Please enter a valid quantity");
+      return;
+    }
+
+    if (adjustmentType === 'delivery' && !deliverySupplierId) {
+      toast.error("Please select a supplier for the delivery");
       return;
     }
 
     try {
-      await inventoryAPI.recordDelivery({
+      await inventoryAPI.updateStock({
         productId: selectedItem.productId,
         quantity: parseFloat(deliveryQuantity),
-        supplierId: parseInt(deliverySupplierId)
+        supplierId: adjustmentType === 'delivery' ? parseInt(deliverySupplierId) : undefined,
+        type: adjustmentType,
+        reason: adjustmentReason
       });
-      toast.success(`Delivery recorded for ${selectedItem.product.productName}`);
+      toast.success(`Stock updated for ${selectedItem.product.productName}`);
       setIsDialogOpen(false);
       setDeliveryQuantity("");
       setDeliverySupplierId("");
+      setAdjustmentReason("");
       setSelectedItem(null);
       fetchInventory();
-    } catch (error) {
-      toast.error("Failed to record delivery");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to update stock");
     }
   };
 
@@ -322,15 +381,15 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
       {/* Header */}
       <header className="bg-primary text-white shadow-lg sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={onBack} className="text-white hover:bg-white/10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="h-8 w-8 object-contain" />
               <div>
-                <h1 className="text-xl font-bold">Inventory & Supply Chain</h1>
-                <p className="text-white/70 text-sm">Manage stock, deliveries and suppliers</p>
+                <h1 className="text-xl font-bold font-sans">Inventory &amp; Supply Chain</h1>
+                <p className="text-white/70 text-sm font-sans">Manage stock, deliveries and suppliers</p>
               </div>
             </div>
             <div className="ml-auto flex gap-2">
@@ -366,10 +425,10 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
               <div className="relative w-full md:w-96">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
                 <Input
                   placeholder="Search products..."
-                  className="pl-9"
+                  className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -382,7 +441,6 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Items</SelectItem>
-                    <SelectItem value="critical">Critical Stock</SelectItem>
                     <SelectItem value="low">Low Stock</SelectItem>
                     <SelectItem value="good">Good Stock</SelectItem>
                   </SelectContent>
@@ -390,9 +448,6 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
 
                 <Button onClick={() => setIsAddDialogOpen(true)} className="bg-primary text-white">
                   <Plus className="w-4 h-4 mr-2" /> Add Product
-                </Button>
-                <Button onClick={() => setIsReturnDialogOpen(true)} variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                  <Undo2 className="w-4 h-4 mr-2" /> Return Item
                 </Button>
               </div>
             </div>
@@ -402,31 +457,46 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                    <CardTitle className="text-sm font-medium font-sans">Total Items</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{items.length}</div>
-                    <p className="text-xs text-muted-foreground">Across {new Set(items.map(i => i.product.category)).size} categories</p>
+                    <p className="text-xs text-muted-foreground mt-1">Across {new Set(items.map(i => i.product.category)).size} categories</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+                    <CardTitle className="text-sm font-medium font-sans">Low Stock Alerts</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-orange-500">
                       {items.filter(i => getStockStatus(i.currentQuantity, i.reorderLevel).status !== "Good").length}
                     </div>
-                    <p className="text-xs text-muted-foreground">Items requiring attention</p>
+                    <p className="text-xs text-muted-foreground mt-1">Items requiring attention</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+                    <CardTitle className="text-sm font-medium font-sans">Total Value</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">Rs. 0</div>
-                    <p className="text-xs text-muted-foreground">Estimated inventory value</p>
+                    {(() => {
+                      const totalValue = items.reduce(
+                        (sum, i) => sum + i.currentQuantity * (i.product.unitCost ?? 0),
+                        0
+                      );
+                      const totalUnits = items.reduce((sum, i) => sum + i.currentQuantity, 0);
+                      return (
+                        <>
+                          <div className="text-2xl font-bold">
+                            Rs. {totalValue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {totalUnits.toLocaleString()} total units across all products
+                          </p>
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </div>
@@ -485,7 +555,7 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
                                   size="sm"
                                   onClick={() => openDeliveryDialog(item)}
                                 >
-                                  Restock
+                                  Update
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -538,18 +608,6 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Mail className="w-4 h-4" />
                         <span>{supplier.email}</span>
-                      </div>
-                    )}
-                    {supplier.items && supplier.items.length > 0 && (
-                      <div className="pt-2 border-t mt-2">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">Supplies:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {supplier.items.map((item, idx) => (
-                            <span key={idx} className="bg-secondary/50 text-secondary-foreground text-[10px] px-2 py-0.5 rounded-full">
-                              {item}
-                            </span>
-                          ))}
-                        </div>
                       </div>
                     )}
                   </CardContent>
@@ -783,6 +841,33 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-supplier">Supplier <span className="text-destructive">*</span></Label>
+              <Select
+                value={newItem.supplierId}
+                onValueChange={(value) => setNewItem({ ...newItem, supplierId: value })}
+              >
+                <SelectTrigger id="add-supplier">
+                  <SelectValue placeholder="Select a supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.length === 0 ? (
+                    <SelectItem value="_none" disabled>No suppliers — add one first</SelectItem>
+                  ) : (
+                    suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {s.name}{s.contactPerson ? ` — ${s.contactPerson}` : ""}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {suppliers.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Go to the Suppliers tab to add a supplier first.
+                </p>
+              )}
+            </div>
           </div>
           <DialogFooter className="p-6 border-t bg-muted/20">
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -799,32 +884,51 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden flex flex-col max-h-[90vh]">
           <DialogHeader className="p-6 border-b">
-            <DialogTitle>Record New Delivery</DialogTitle>
+            <DialogTitle>Update Inventory Stock</DialogTitle>
             <DialogDescription>
-              Add stock for {selectedItem?.product.productName}
+              Adjust stock levels for {selectedItem?.product.productName}
             </DialogDescription>
           </DialogHeader>
           <div className="p-6 overflow-y-auto flex-1 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="supplier">Supplier</Label>
+              <Label>Adjustment Type</Label>
               <Select
-                value={deliverySupplierId}
-                onValueChange={(value) => setDeliverySupplierId(value)}
+                value={adjustmentType}
+                onValueChange={(value: 'delivery' | 'used') => setAdjustmentType(value)}
               >
-                <SelectTrigger id="supplier">
-                  <SelectValue placeholder="Select supplier" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id.toString()}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="delivery">Stock Delivery (Increase)</SelectItem>
+                  <SelectItem value="used">Stock Used (Decrease)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {adjustmentType === 'delivery' && (
+              <div className="space-y-2 animate-in fade-in duration-300">
+                <Label htmlFor="supplier">Supplier</Label>
+                <Select
+                  value={deliverySupplierId}
+                  onValueChange={(value) => setDeliverySupplierId(value)}
+                >
+                  <SelectTrigger id="supplier">
+                    <SelectValue placeholder="Select supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity Delivered</Label>
+              <Label htmlFor="quantity">{adjustmentType === 'delivery' ? 'Quantity Delivered' : 'Quantity Used'}</Label>
               <div className="flex gap-2">
                 <Input
                   id="quantity"
@@ -839,6 +943,17 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
                 </div>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason / Note (Optional)</Label>
+              <Input
+                id="reason"
+                placeholder={adjustmentType === 'delivery' ? "e.g. Monthly restock" : "e.g. Daily prep usage"}
+                value={adjustmentReason}
+                onChange={(e) => setAdjustmentReason(e.target.value)}
+              />
+            </div>
+
             <div className="p-4 bg-muted rounded-lg border">
               <p className="text-sm text-muted-foreground mb-1 font-medium">Current Stock</p>
               <p className="text-xl font-bold text-primary">{selectedItem?.currentQuantity} {selectedItem?.product.unit}</p>
@@ -851,9 +966,9 @@ export function InventoryManagement({ onBack }: InventoryManagementProps) {
             </Button>
             <Button
               className="bg-secondary hover:bg-secondary/90 text-primary font-bold px-8"
-              onClick={handleRecordDelivery}
+              onClick={handleUpdateStock}
             >
-              Record Delivery
+              Update
             </Button>
           </DialogFooter>
         </DialogContent>

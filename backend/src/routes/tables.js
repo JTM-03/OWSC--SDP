@@ -7,6 +7,34 @@ const upload = require("../config/upload");
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /tables/book:
+ *   post:
+ *     summary: Book restaurant tables
+ *     tags: [Tables]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [location, tableCount, reservationDate, reservationTime]
+ *             properties:
+ *               location:        { type: string, enum: [Indoor, Outdoor] }
+ *               tableCount:      { type: integer, example: 2 }
+ *               reservationDate: { type: string, format: date, example: "2026-05-01" }
+ *               reservationTime: { type: string, example: "19:00" }
+ *               receipt:         { type: string, format: binary }
+ *     responses:
+ *       201:
+ *         description: Tables booked successfully
+ *       400:
+ *         description: Not enough tables or restricted date
+ */
+
 router.post("/book", authenticate, upload.single('receipt'), async (req, res, next) => {
     try {
         const memberId = req.user.id;

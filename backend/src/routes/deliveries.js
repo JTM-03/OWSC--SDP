@@ -4,8 +4,80 @@ const { authenticate, requireRole } = require("../middleware/auth")
 const { z } = require('zod')
 const { validate } = require("../middleware/validate")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { parsePagination, paginationMeta } = require("../utils/pagination")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /deliveries:
+ *   get:
+ *     summary: List all deliveries with pagination (Admin/Staff)
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: status
+ *         schema: { type: string, enum: [On-Process, Completed, Cancelled] }
+ *     responses:
+ *       200:
+ *         description: Paginated deliveries
+ *   post:
+ *     summary: Create a new delivery order (Admin/Staff)
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [supplierId, items]
+ *             properties:
+ *               supplierId: { type: integer }
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     productId: { type: integer }
+ *                     quantity:  { type: number }
+ *     responses:
+ *       201:
+ *         description: Delivery created
+ *
+ * /deliveries/{id}/status:
+ *   put:
+ *     summary: Update delivery status (Admin/Staff)
+ *     tags: [Deliveries]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status: { type: string, enum: [On-Process, Completed, Cancelled] }
+ *     responses:
+ *       200:
+ *         description: Status updated
+ */
 
 const createDeliverySchema = z.object({
     supplierId: z.number().int(),
@@ -22,20 +94,26 @@ const updateStatusSchema = z.object({
 // GET /api/deliveries - List all deliveries
 router.get("/", authenticate, requireRole('admin', 'staff'), async (req, res, next) => {
     try {
-        const deliveries = await prisma.delivery.findMany({
-            include: {
-                supplier: true,
-                deliveryItems: {
-                    include: {
-                        product: true
-                    }
-                }
-            },
-            orderBy: {
-                deliveryDate: 'desc'
-            }
-        })
-        res.json(deliveries)
+        const { skip, take, page, limit } = parsePagination(req.query)
+        const { status } = req.query
+
+        const where = status ? { deliveryStatus: status } : {}
+
+        const [deliveries, total] = await Promise.all([
+            prisma.delivery.findMany({
+                where,
+                include: {
+                    supplier: true,
+                    deliveryItems: { include: { product: true } }
+                },
+                orderBy: { deliveryDate: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.delivery.count({ where })
+        ])
+
+        res.json({ data: deliveries, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }

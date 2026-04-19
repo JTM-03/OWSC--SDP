@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Minus, ShoppingCart, User, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Minus, ShoppingCart, User, Loader2, Trash2, UserCheck } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
@@ -10,6 +10,7 @@ import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { menuAPI, MenuItem } from "../api/menu";
 import { orderAPI } from "../api/order";
+import { useAuth } from "../contexts/AuthContext";
 
 interface InPlaceOrdersProps {
   onBack: () => void;
@@ -21,12 +22,17 @@ interface OrderItem {
 }
 
 export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
+  const { user } = useAuth();
   const [customerName, setCustomerName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Quantity warning
+  const QUANTITY_WARN_THRESHOLD = 10;
+  const [pendingAdd, setPendingAdd] = useState<MenuItem | null>(null);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -44,6 +50,17 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
   }, []);
 
   const addToOrder = (item: MenuItem) => {
+    const existingItem = orderItems.find(oi => oi.menuItem.id === item.id);
+    const newQty = existingItem ? existingItem.quantity + 1 : 1;
+
+    if (newQty > QUANTITY_WARN_THRESHOLD) {
+      setPendingAdd(item);
+      return;
+    }
+    applyAdd(item);
+  };
+
+  const applyAdd = (item: MenuItem) => {
     const existingItem = orderItems.find(oi => oi.menuItem.id === item.id);
     if (existingItem) {
       setOrderItems(orderItems.map(oi =>
@@ -165,6 +182,42 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
 
   return (
     <div className="min-h-screen bg-background">
+
+      {/* ── Quantity warning modal (POS) ── */}
+      {pendingAdd && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <span className="text-amber-600 text-xl">⚠️</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900">Large Quantity</h3>
+                <p className="text-sm text-slate-500">Please confirm before adding</p>
+              </div>
+            </div>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              You are ordering more than <strong>{QUANTITY_WARN_THRESHOLD}×</strong>{' '}
+              <strong>{pendingAdd.name}</strong>. Are you sure you want to proceed?
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setPendingAdd(null)}
+                className="flex-1 px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { applyAdd(pendingAdd); setPendingAdd(null); }}
+                className="flex-1 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Yes, Add It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-primary text-white shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-6 py-6">
@@ -190,6 +243,22 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Menu Items */}
           <div className="lg:col-span-2">
+            {/* Staff Assignment Banner */}
+            <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Assigned Waiter</p>
+                <p className="font-semibold text-sm text-primary truncate">
+                  {user?.fullName ?? user?.username ?? "Unknown Staff"}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5 flex-shrink-0">
+                Staff ID #{user?.id}
+              </Badge>
+            </div>
+
             {/* Customer Details */}
             <Card className="mb-6">
               <CardHeader>
@@ -289,8 +358,14 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
                 </CardTitle>
                 {customerName && tableNumber && (
                   <CardDescription>
-                    {customerName} - Table {tableNumber}
+                    {customerName} — Table {tableNumber}
                   </CardDescription>
+                )}
+                {user && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    <UserCheck className="w-3.5 h-3.5 text-primary" />
+                    <span>Waiter: <span className="font-medium text-foreground">{user.fullName ?? user.username}</span></span>
+                  </div>
                 )}
               </CardHeader>
               <CardContent>

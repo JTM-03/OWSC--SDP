@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, Users, DollarSign, MapPin, Upload, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, MapPin, Upload, Calendar as CalendarIcon, Loader2, SlidersHorizontal, CheckCircle2, Tag, AlertTriangle } from "lucide-react";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Separator } from "./ui/separator";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { getImageUrl } from "../utils/image";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { venueAPI, Venue } from "../api/venue";
-import { isRestrictedDate } from "../utils/dateRestriction";
+import { isRestrictedDate, getRestrictionReason, isPastDate } from "../utils/dateRestriction";
 import api from '../api/axios';
+import { VenueBookingCalendar } from "./VenueBookingCalendar";
+import { Calendar } from "lucide-react";
 
 interface VenueBookingProps {
   onBack: () => void;
@@ -54,6 +58,14 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [showCalendarDialog, setShowCalendarDialog] = useState(false);
+  const [dateWarning, setDateWarning] = useState<string | null>(null);
+
+  // Today's date string (YYYY-MM-DD) used as min for date inputs
+  const today = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  })();
 
   useEffect(() => {
     // Initial fetch optional now that we search, but good to show something
@@ -76,56 +88,39 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
     { id: "main", name: "Main Branch - Colombo 7", location: "Guildford Crescent" },
   ];
 
-  const handleSearch = async () => {
-    if (!selectedDate || !startTime || !endTime) {
-      toast.error("Please select date and time range");
-      return;
-    }
-    
-    if (isRestrictedDate(selectedDate)) {
-      toast.error( bookingMode === 'venue' ? "Venue bookings are not allowed on Sundays or Poya days." : "Table bookings are not allowed on Sundays or Poya days.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const results = await venueAPI.searchVenues({
-        date: selectedDate,
-        startTime,
-        endTime,
-        capacity: guestCount,
-        occasion: occasion !== 'all' ? occasion : undefined,
-      });
-
-      if (selectedVenueFilter !== 'all') {
-        const specificVenue = results.find(v => v.id.toString() === selectedVenueFilter);
-        if (specificVenue) {
-          setVenues([specificVenue]);
-        } else {
-          setVenues([]);
-          toast.error("Selected facility is unavailable for this time slot");
-          return;
-        }
-      } else {
-        setVenues(results);
+  // Auto-search venues when date/time changes
+  useEffect(() => {
+    if (selectedDate && startTime && endTime) {
+      if (!isRestrictedDate(selectedDate)) {
+        setLoading(true);
+        venueAPI.searchVenues({
+          date: selectedDate,
+          startTime,
+          endTime,
+          capacity: guestCount,
+          occasion: occasion !== 'all' ? occasion : undefined,
+        }).then(results => {
+          if (selectedVenueFilter !== 'all') {
+            setVenues(results.filter((v: Venue) => v.id.toString() === selectedVenueFilter));
+          } else {
+            setVenues(results);
+          }
+        }).catch(() => {
+          toast.error("Failed to search venues");
+        }).finally(() => {
+          setLoading(false);
+        });
       }
-
-      if (results.length === 0 && selectedVenueFilter === 'all') {
-        toast.info("No venues available for this time slot");
-      }
-    } catch (error) {
-      toast.error("Failed to search venues");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [selectedDate, startTime, endTime, selectedVenueFilter, occasion, guestCount]);
 
-  const filteredVenues = venues.filter(venue => {
-    // Client side filter for branch if needed
-    return true; // We rely on backend search now mainly
-  });
 
   const handleBookNow = (venue: Venue) => {
+    if (selectedDate && isRestrictedDate(selectedDate)) {
+      const reason = getRestrictionReason(selectedDate);
+      toast.error("Booking not available", { description: reason ?? "The club is closed on this date." });
+      return;
+    }
     setBookingForm({
       venue: {
         id: venue.id,
@@ -134,7 +129,7 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
       },
       numberOfPeople: guestCount,
       eventDate: selectedDate || '',
-      timeSlot: `${startTime} - ${endTime}`, // Display only
+      timeSlot: `${startTime} – ${endTime}`, // Display only
       eventType: ''
     });
     setBookingStep('form');
@@ -143,18 +138,17 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
   };
 
   const handleNext = () => {
-    // Validate form
     if (!bookingForm.numberOfPeople || !bookingForm.eventDate || !bookingForm.eventType || !startTime || !endTime) {
       toast.error("Please fill in all fields including time range");
       return;
     }
     
-    if (isRestrictedDate(bookingForm.eventDate)) {
-      toast.error("Cannot book on Sundays or Poya days.");
+    const reason = getRestrictionReason(bookingForm.eventDate);
+    if (reason) {
+      toast.error("Booking not available on this date", { description: reason });
       return;
     }
 
-    // Proceeds to payment directly.
     setBookingStep('payment');
   };
 
@@ -262,230 +256,317 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Filter Panel */}
-          <Card className="lg:col-span-1 h-fit">
-            <CardHeader>
-              <CardTitle>Filter Facilities</CardTitle>
-              <CardDescription>Find the perfect space</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="branch">Branch Location</Label>
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger id="branch">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map(branch => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* ── Filter Panel ── */}
+          <aside className="lg:col-span-1 space-y-4">
+            {/* Filter card */}
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+              {/* Panel header */}
+              <div className="bg-primary/5 border-b px-4 py-3 flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-primary" />
+                <span className="font-semibold text-sm text-primary">Filter Facilities</span>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    if (isRestrictedDate(e.target.value)) {
-                       toast.error("Cannot book on Sundays or Poya days.", { id: "date-restricted" });
-                    }
-                  }}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="guests">Number of People</Label>
-                <Input
-                  id="guests"
-                  type="number"
-                  placeholder="e.g., 50"
-                  value={guestCount}
-                  onChange={(e) => setGuestCount(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Time Range</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="flex-1"
-                  />
-                  <span>-</span>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-
-              {bookingMode === 'venue' && (
-                <div className="space-y-2">
-                  <Label htmlFor="occasion">Occasion Type</Label>
-                  <Select value={occasion} onValueChange={setOccasion}>
-                    <SelectTrigger id="occasion">
-                      <SelectValue placeholder="Select occasion" />
+              <div className="p-4 space-y-5">
+                {/* Branch */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Branch</p>
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Any Occasion</SelectItem>
-                      <SelectItem value="Wedding">Wedding</SelectItem>
-                      <SelectItem value="Birthday">Birthday Party</SelectItem>
-                      <SelectItem value="Corporate">Corporate Event</SelectItem>
-                      <SelectItem value="Meeting">Meeting</SelectItem>
-                      <SelectItem value="GetTogether">Get Together</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {bookingMode === 'venue' && (
-                <div className="space-y-2">
-                  <Label htmlFor="venueSelect">Select Facility</Label>
-                  <Select value={selectedVenueFilter} onValueChange={setSelectedVenueFilter}>
-                    <SelectTrigger id="venueSelect">
-                      <SelectValue placeholder="All Facilities" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Facilities</SelectItem>
-                      {allVenues.map(venue => (
-                        <SelectItem key={venue.id} value={venue.id.toString()}>{venue.name}</SelectItem>
+                      {branches.map(branch => (
+                        <SelectItem key={branch.id} value={branch.id}>{branch.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              )}
 
-              <Button className="w-full bg-secondary text-primary hover:bg-secondary/90" onClick={handleSearch}>
-                Check Availability
-              </Button>
-            </CardContent>
-          </Card>
+                {/* Date */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Event Date</p>
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    min={today}
+                    className={`h-9 text-sm ${dateWarning ? 'border-destructive ring-1 ring-destructive/40' : ''}`}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedDate(val);
+                      const reason = getRestrictionReason(val);
+                      setDateWarning(reason);
+                    }}
+                  />
+                  {dateWarning && (
+                    <div className="flex items-start gap-2 rounded-lg bg-destructive/8 border border-destructive/25 px-3 py-2 mt-1">
+                      <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-destructive">Club Closed</p>
+                        <p className="text-xs text-destructive/80 mt-0.5">{dateWarning} Please choose a different date.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-           {/* Venue/Table Grid */}
+                {/* Guests */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guests</p>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 50"
+                    value={guestCount}
+                    className="h-9 text-sm"
+                    onChange={(e) => setGuestCount(e.target.value)}
+                  />
+                </div>
+
+                {/* Time Range */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Time Range</p>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={startTime}
+                      className="h-9 text-sm flex-1"
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                    <span className="text-muted-foreground text-sm">–</span>
+                    <Input
+                      type="time"
+                      value={endTime}
+                      className="h-9 text-sm flex-1"
+                      onChange={(e) => setEndTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {bookingMode === 'venue' && (
+                  <>
+                    {/* Occasion */}
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Occasion</p>
+                      <Select value={occasion} onValueChange={setOccasion}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Any Occasion" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Any Occasion</SelectItem>
+                          <SelectItem value="Wedding">Wedding</SelectItem>
+                          <SelectItem value="Birthday">Birthday Party</SelectItem>
+                          <SelectItem value="Corporate">Corporate Event</SelectItem>
+                          <SelectItem value="Meeting">Meeting</SelectItem>
+                          <SelectItem value="GetTogether">Get Together</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Facility */}
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Facility</p>
+                      <Select value={selectedVenueFilter} onValueChange={setSelectedVenueFilter}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="All Facilities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Facilities</SelectItem>
+                          {allVenues.map(venue => (
+                            <SelectItem key={venue.id} value={venue.id.toString()}>{venue.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+
+                <Separator />
+
+                {/* Active filter chips */}
+                {(selectedDate || guestCount || startTime || occasion !== 'all' || selectedVenueFilter !== 'all') && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedDate && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                        <CheckCircle2 className="w-3 h-3" />{selectedDate}
+                      </span>
+                    )}
+                    {guestCount && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                        <Users className="w-3 h-3" />{guestCount} guests
+                      </span>
+                    )}
+                    {occasion !== 'all' && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                        <Tag className="w-3 h-3" />{occasion}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Calendar CTA */}
+            <Button
+              className="w-full bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-2 h-10"
+              onClick={() => setShowCalendarDialog(true)}
+            >
+              <Calendar className="w-4 h-4" />
+              View Availability Calendar
+            </Button>
+          </aside>
+
+          {/* ── Venue / Table Grid ── */}
           <div className="lg:col-span-3">
             {bookingMode === 'table' ? (
-               <Card>
-                 <CardHeader>
-                   <CardTitle>Table Bookings</CardTitle>
-                   <CardDescription>Reserve tables for your visit</CardDescription>
-                 </CardHeader>
-                 <CardContent className="space-y-6">
-                    <div className="bg-muted/30 p-4 rounded-lg flex items-center gap-4 mb-4">
-                       <Users className="w-8 h-8 text-secondary" />
-                       <div>
-                          <p className="font-semibold text-foreground">Each table seats up to 5 people</p>
-                          <p className="text-sm text-muted-foreground">Price: Rs 200 per table</p>
-                       </div>
+              <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                <div className="bg-primary/5 border-b px-5 py-4">
+                  <h3 className="font-semibold text-primary">Table Bookings</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">Reserve tables for your visit</p>
+                </div>
+                <div className="p-5 space-y-6">
+                  <div className="bg-muted/40 rounded-lg p-4 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-5 h-5 text-secondary" />
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <Label>Table Location</Label>
-                          <Select value={tableLocation} onValueChange={(v: "Indoor Non-AC (TV Area)" | "Indoor AC (Presidential Lounge)" | "Outdoor (Lawn Area)") => setTableLocation(v)}>
-                            <SelectTrigger><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Indoor Non-AC (TV Area)">Indoor Non-AC (TV Area)</SelectItem>
-                              <SelectItem value="Indoor AC (Presidential Lounge)">Indoor AC (Presidential Lounge)</SelectItem>
-                              <SelectItem value="Outdoor (Lawn Area)">Outdoor (Lawn Area)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                       </div>
-                       <div className="space-y-2">
-                          <Label>Quantity of Tables</Label>
-                          <Input type="number" min="1" max={tableLocation.includes('Outdoor') ? 20 : 15} value={tableCount} onChange={(e) => setTableCount(e.target.value)} />
-                       </div>
+                    <div>
+                      <p className="font-semibold text-sm">Each table seats up to 5 people</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Rs. 200 per table</p>
                     </div>
-                 </CardContent>
-                 <CardFooter>
-                     <Button 
-                        className="w-full bg-secondary hover:bg-secondary/90 text-primary" 
-                        onClick={() => {
-                          // Bypass search directly to booking process
-                          if (!selectedDate || !startTime || !endTime) {
-                             toast.error("Please select a date and time range on the left panel");
-                             return;
-                          }
-                          if (isRestrictedDate(selectedDate)) {
-                             toast.error("Cannot book on Sundays or Poya days.");
-                             return;
-                          }
-                          setBookingForm({
-                             venue: { id: 0, name: `${tableCount} ${tableLocation} Table(s)`, price: parseInt(tableCount) * 200 },
-                             numberOfPeople: (parseInt(tableCount) * 5).toString(),
-                             eventDate: selectedDate,
-                             timeSlot: `${startTime} - ${endTime}`,
-                             eventType: 'Dining'
-                          });
-                          setBookingStep('payment');
-                          setShowBookingDialog(true);
-                          setReceiptFile(null);
-                        }}
-                     >Proceed to Payment</Button>
-                 </CardFooter>
-               </Card>
-            ) : loading ? (
-              <div className="flex flex-col items-center justify-center py-24">
-                <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading facilities...</p>
-              </div>
-            ) : filteredVenues.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <MapPin className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
-                  <p className="text-muted-foreground">No facilities found matching your criteria</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {filteredVenues.map((venue) => (
-                  <Card key={venue.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-[4/3] relative">
-                      <ImageWithFallback
-                        src={venue.imageUrl
-                          ? (venue.imageUrl.startsWith('http') ? venue.imageUrl : `http://localhost:5000${venue.imageUrl}`)
-                          : "https://images.unsplash.com/photo-1759519238029-689e99c6d19e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbGVnYW50JTIwZXZlbnQlMjB2ZW51ZXxlbnwxfHx8fDE3NjA4Nzc1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"}
-                        alt={venue.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <CardHeader>
-                      <CardTitle>{venue.name}</CardTitle>
-                      <CardDescription>{venue.description || venue.atmosphere || "Reserve this facility for your event"}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>Up to {venue.capacity} people</span>
-                        </div>
-                        <div className="flex items-center gap-1">
+                  </div>
 
-                          <span>Rs. {venue.charge.toLocaleString()} {venue.pricingUnit || 'per person'}</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Location</Label>
+                      <Select value={tableLocation} onValueChange={(v: "Indoor Non-AC (TV Area)" | "Indoor AC (Presidential Lounge)" | "Outdoor (Lawn Area)") => setTableLocation(v)}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Indoor Non-AC (TV Area)">Indoor Non-AC (TV Area)</SelectItem>
+                          <SelectItem value="Indoor AC (Presidential Lounge)">Indoor AC (Presidential Lounge)</SelectItem>
+                          <SelectItem value="Outdoor (Lawn Area)">Outdoor (Lawn Area)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Tables</Label>
+                      <Input type="number" min="1" max={tableLocation.includes('Outdoor') ? 20 : 15} value={tableCount} className="h-9 text-sm" onChange={(e) => setTableCount(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full bg-secondary hover:bg-secondary/90 text-primary font-semibold"
+                    onClick={() => {
+                      if (!selectedDate || !startTime || !endTime) {
+                        toast.error("Please select a date and time range on the left panel");
+                        return;
+                      }
+                      const reason = getRestrictionReason(selectedDate);
+                      if (reason) {
+                        toast.error("Booking not available on this date", { description: reason });
+                        return;
+                      }
+                      setBookingForm({
+                        venue: { id: 0, name: `${tableCount} ${tableLocation} Table(s)`, price: parseInt(tableCount) * 200 },
+                        numberOfPeople: (parseInt(tableCount) * 5).toString(),
+                        eventDate: selectedDate,
+                        timeSlot: `${startTime} – ${endTime}`,
+                        eventType: 'Dining'
+                      });
+                      setBookingStep('payment');
+                      setShowBookingDialog(true);
+                      setReceiptFile(null);
+                    }}
+                  >
+                    Proceed to Payment
+                  </Button>
+                </div>
+              </div>
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                <p className="text-sm text-muted-foreground">Loading facilities...</p>
+              </div>
+            ) : venues.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 gap-3 rounded-xl border bg-card">
+                <MapPin className="w-12 h-12 text-muted-foreground/30" />
+                <p className="font-medium text-muted-foreground">No facilities match your criteria</p>
+                <p className="text-sm text-muted-foreground">Try adjusting your filters or selecting a different date</p>
+              </div>
+            ) : (
+              <>
+                {/* Result count */}
+                <p className="text-sm text-muted-foreground mb-4">
+                  Showing <span className="font-semibold text-foreground">{venues.length}</span> {venues.length === 1 ? 'facility' : 'facilities'}
+                  {selectedDate && <> available on <span className="font-semibold text-foreground">{new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span></>}
+                </p>
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  {venues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      className="rounded-xl border bg-card shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+                    >
+                      {/* Image */}
+                      <div className="aspect-[16/9] relative overflow-hidden">
+                        <ImageWithFallback
+                          src={getImageUrl(venue.imageUrl) ?? "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop"}
+                          alt={venue.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      {/* Body */}
+                      <div className="p-4 flex flex-col flex-1 gap-3">
+                        {/* Title + price */}
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-bold text-base text-primary leading-tight">{venue.name}</h3>
+                          <span className="text-sm font-semibold text-secondary whitespace-nowrap">
+                            Rs. {Number(venue.charge).toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* Description — capped at 2 lines */}
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                          {venue.description || venue.atmosphere || "Reserve this facility for your event."}
+                        </p>
+
+                        {/* Meta row */}
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5" />
+                            Up to {venue.capacity} guests
+                          </span>
+                        </div>
+
+                        {/* Feature badges */}
+                        {venue.facilities && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {venue.facilities.split(',').slice(0, 3).map((f, i) => (
+                              <Badge key={i} variant="outline" className="text-xs px-2 py-0 h-5 bg-muted/50">
+                                {f.trim()}
+                              </Badge>
+                            ))}
+                            {venue.facilities.split(',').length > 3 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0 h-5 bg-muted/50">
+                                +{venue.facilities.split(',').length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+
+                        {/* CTA — always at bottom */}
+                        <div className="mt-auto pt-2">
+                          <Button
+                            className="w-full bg-secondary hover:bg-secondary/90 text-primary font-semibold h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!!dateWarning}
+                            title={dateWarning ?? undefined}
+                            onClick={() => handleBookNow(venue)}
+                          >
+                            {dateWarning ? "Unavailable on Selected Date" : "Book Now"}
+                          </Button>
                         </div>
                       </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button
-                        className="w-full bg-secondary hover:bg-secondary/90 text-primary"
-                        onClick={() => handleBookNow(venue)}
-                      >
-                        Book Now
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -526,8 +607,23 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                   id="eventDate"
                   type="date"
                   value={bookingForm.eventDate}
+                  min={today}
+                  className={getRestrictionReason(bookingForm.eventDate) ? 'border-destructive ring-1 ring-destructive/40' : ''}
                   onChange={(e) => setBookingForm({ ...bookingForm, eventDate: e.target.value })}
                 />
+                {getRestrictionReason(bookingForm.eventDate) && (
+                  <div className="flex items-start gap-2 rounded-lg bg-destructive/8 border border-destructive/25 px-3 py-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-destructive">
+                        {isPastDate(bookingForm.eventDate) ? "Past Date" : "Club Closed on This Date"}
+                      </p>
+                      <p className="text-xs text-destructive/80 mt-0.5">
+                        {getRestrictionReason(bookingForm.eventDate)} Please select a different date.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -691,6 +787,23 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Calendar Dialog */}
+      <Dialog open={showCalendarDialog} onOpenChange={setShowCalendarDialog}>
+        <DialogContent className="max-w-6xl w-[95vw] h-[92vh] overflow-hidden p-0 flex flex-col">
+          <DialogDescription className="sr-only">
+            View venue availability across dates before making a booking.
+          </DialogDescription>
+          <div className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-primary">
+              <Calendar className="w-5 h-5" /> Venue Availability Calendar
+            </DialogTitle>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <VenueBookingCalendar onBack={() => setShowCalendarDialog(false)} hideHeader={true} />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

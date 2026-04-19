@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Users, Search, CheckCircle, XCircle, Clock, Mail, Phone, Crown, ArrowUpCircle, UserPlus, Eye, CalendarDays, BadgeCheck, Wallet } from "lucide-react";
+import { ArrowLeft, Users, Search, CheckCircle, XCircle, Clock, Mail, Phone, Crown, ArrowUpCircle, UserPlus, Eye, CalendarDays, BadgeCheck, Wallet, Download, ExternalLink, FileText, ShieldCheck } from "lucide-react";
 import { Button } from "./ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -16,7 +16,7 @@ import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { useEffect } from "react";
 import { membershipAPI, Member as APIMember, Membership as APIMembership, UpgradeRequest as APIUpgradeRequest } from "../api/membership";
 import { authAPI } from "../api/auth";
-import { Loader2 } from "lucide-react";
+import { getFileUrl, getImageUrl } from "../utils/image";
 
 interface MembershipManagementProps {
   onBack: () => void;
@@ -26,7 +26,6 @@ interface MembershipManagementProps {
 
 export function MembershipManagement({ onBack }: MembershipManagementProps) {
   const [members, setMembers] = useState<APIMember[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -60,8 +59,6 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
       setMembers(data);
     } catch (error) {
       toast.error("Failed to load members");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -229,6 +226,17 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
   const handleAddNewMember = async () => {
     if (!newMemberForm.name || !newMemberForm.email || !newMemberForm.phone) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(newMemberForm.phone)) {
+      toast.error("Phone number must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
+      return;
+    }
+
+    if (newMemberForm.emergencyPhone && !phoneRegex.test(newMemberForm.emergencyPhone)) {
+      toast.error("Emergency phone must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
       return;
     }
 
@@ -637,110 +645,235 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
 
         {/* Member Detail Dialog */}
         <Dialog open={!!viewMember} onOpenChange={(open) => !open && setViewMember(null)}>
-          <DialogContent className="max-w-lg p-0 overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogContent className="max-w-2xl p-0 overflow-hidden flex flex-col max-h-[95vh] rounded-xl shadow-2xl border-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>{viewMember?.fullName ?? "Member Application"}</DialogTitle>
+              <DialogDescription>Review membership application details and take action.</DialogDescription>
+            </DialogHeader>
             {viewMember && (() => {
               const ms = viewMember.memberships?.[0];
               const status = (ms?.status || viewMember.status || "Pending").toLowerCase();
-              const mType = (ms?.type || "").toLowerCase();
+              const mType = (ms?.type || ms?.membershipType || "").toLowerCase();
               const typeInfo = MEMBERSHIP_TYPE_LABELS[mType];
               const fee = ms?.membershipFee || 0;
               const joinDate = ms?.startDate || viewMember.registrationDate || "";
               const expiryDate = ms?.endDate || "";
+              const payment = ms?.payments?.[0];
+              const receiptUrl = payment?.receiptUrl || viewMember.paymentSlipUrl || null;
+              const resolvedReceiptUrl = receiptUrl ? getFileUrl(receiptUrl) : null;
+              const resolvedImageUrl   = receiptUrl ? getImageUrl(receiptUrl) : null;
+              const isPdf = receiptUrl && /\.pdf$/i.test(receiptUrl);
+              const nicImageUrl = (viewMember as any).nicImageUrl || null;
+              const resolvedNicUrl   = nicImageUrl ? getFileUrl(nicImageUrl) : null;
+              const resolvedNicImage = nicImageUrl ? getImageUrl(nicImageUrl) : null;
+              const isNicPdf = nicImageUrl && /\.pdf$/i.test(nicImageUrl);
+              const statusConfig = {
+                active:  { label: "Active",        cls: "bg-emerald-50  text-emerald-700  border-emerald-200"  },
+                pending: { label: "Pending Review", cls: "bg-amber-50  text-amber-800  border-amber-300"  },
+                expired: { label: "Expired",        cls: "bg-red-100    text-red-800    border-red-300"    },
+              }[status] ?? { label: status, cls: "bg-gray-100 text-gray-700 border-gray-300" };
+
+              // Neutral plan badge colours (not semantic green/red)
+              const planBadgeColor = "bg-blue-50 text-blue-800 border-blue-200";
+
+              const Field = ({ label, value, className = "" }: { label: string; value: React.ReactNode; className?: string }) => (
+                <div className={className}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{label}</p>
+                  <p className="text-sm font-semibold text-gray-900 leading-snug">{value || "—"}</p>
+                </div>
+              );
+
               return (
                 <>
-                  <DialogHeader className="p-6 border-b bg-primary text-white">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <DialogTitle className="text-white text-xl">{viewMember.fullName}</DialogTitle>
-                        <p className="text-white/70 text-xs mt-1 font-mono">MEMBER-{viewMember.id}</p>
+                  {/* ── Header with gradient background ── */}
+                  <div className="flex-shrink-0 px-8 pt-8 pb-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+                    <div className="flex items-start justify-between gap-4 mb-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Membership Application</p>
+                        <h2 className="text-2xl font-bold leading-tight truncate">{viewMember.fullName}</h2>
+                        <p className="text-sm text-slate-300 flex items-center gap-2 mt-2">
+                          <Clock className="w-4 h-4 flex-shrink-0" />
+                          Submitted {new Date(viewMember.registrationDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </p>
                       </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        <Badge variant="outline" className={`text-xs ${getStatusColor(status as any)}`}>
-                          {getStatusIcon(status as any)}
-                          <span className="ml-1 capitalize">{status}</span>
-                        </Badge>
-                        {typeInfo && (
-                          <Badge variant="outline" className={`text-xs ${typeInfo.color}`}>{typeInfo.label}</Badge>
-                        )}
-                      </div>
+                      <Badge className={`text-xs font-bold px-4 py-2 flex-shrink-0 rounded-full ${statusConfig.cls}`}>
+                        {statusConfig.label}
+                      </Badge>
                     </div>
-                  </DialogHeader>
-                  <div className="p-6 overflow-y-auto flex-1 space-y-5">
-                    {/* Contact Info */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Email</p>
-                        <p className="text-sm flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-muted-foreground" />{viewMember.email}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Phone</p>
-                        <p className="text-sm flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-muted-foreground" />{viewMember.phone || "—"}</p>
-                      </div>
-                    </div>
+                  </div>
 
-                    {/* Membership Info */}
-                    <div className="p-4 rounded-xl bg-muted/40 border space-y-4">
-                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Membership Details</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-start gap-2">
-                          <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Join Date</p>
-                            <p className="text-sm font-semibold">{joinDate ? new Date(joinDate).toLocaleDateString() : "—"}</p>
-                          </div>
+                  {/* ── Body with better spacing ── */}
+                  <div className="overflow-y-auto flex-1 min-h-0 bg-slate-50 scroll-smooth">
+
+                    {/* Contact info section */}
+                    <div className="px-8 py-6 bg-white border-b border-slate-200">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Contact Information</h3>
+                      <div className="space-y-4">
+                        <Field label="Email Address" value={<span className="break-all text-base">{viewMember.email}</span>} />
+                        <div className="grid grid-cols-2 gap-6">
+                          <Field label="Phone" value={viewMember.phone} />
+                          <Field label="NIC / Passport" value={viewMember.nic} />
                         </div>
-                        <div className="flex items-start gap-2">
-                          <CalendarDays className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Expiry Date</p>
-                            <p className="text-sm font-semibold">{expiryDate ? new Date(expiryDate).toLocaleDateString() : "—"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <Wallet className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Membership Fee</p>
-                            <p className="text-lg font-bold text-secondary">{fee > 0 ? `Rs. ${fee.toLocaleString()}` : "—"}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <BadgeCheck className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs text-muted-foreground">Member Since</p>
-                            <p className="text-sm font-semibold">{viewMember.registrationDate ? new Date(viewMember.registrationDate).toLocaleDateString() : "—"}</p>
-                          </div>
+                        <div className="grid grid-cols-2 gap-6">
+                          <Field label="Date of Birth" value={(viewMember as any).dateOfBirth ? new Date((viewMember as any).dateOfBirth).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} />
+                          {viewMember.address && (
+                            <Field label="Address" value={viewMember.address} />
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Pending actions */}
-                    {status === "pending" && ms && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 border-destructive text-destructive hover:bg-destructive/5"
-                          onClick={() => { openRejectDialog(viewMember); setViewMember(null); }}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" /> Reject
-                        </Button>
-                        <Button
-                          className="flex-1 bg-primary hover:bg-primary/90 text-white"
-                          onClick={() => { handleApprove(ms.id, viewMember.fullName); setViewMember(null); }}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" /> Approve
-                        </Button>
+                    {/* Membership details section */}
+                    <div className="px-8 py-6 bg-white border-b border-slate-200">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Membership Details</h3>
+                      <div className="grid grid-cols-3 gap-6">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Plan Type</p>
+                          <Badge variant="outline" className={`text-sm font-semibold px-3 py-1.5 rounded-lg ${planBadgeColor}`}>
+                            {typeInfo ? typeInfo.label.replace(' Member', '') : (mType || "—")}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Fee Amount</p>
+                          <span className="text-lg font-bold text-slate-900 tabular-nums">
+                            {fee > 0 ? `Rs. ${fee.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : "—"}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">Status</p>
+                          <span className="text-sm font-semibold text-slate-700">{statusConfig.label}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dates section */}
+                    <div className="px-8 py-6 bg-white border-b border-slate-200">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Membership Period</h3>
+                      <div className="grid grid-cols-2 gap-6">
+                        <Field label="Join Date" value={joinDate ? new Date(joinDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} />
+                        <Field label="Expiry Date" value={expiryDate ? new Date(expiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : undefined} />
+                      </div>
+                    </div>
+
+                    {/* Documents section */}
+                    <div className="px-8 py-6 bg-white border-b border-slate-200">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Supporting Documents</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        {/* NIC / Passport Photo */}
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-primary" />
+                            NIC / Passport Photo
+                          </p>
+                          <div className="w-full h-48 rounded-xl border-2 border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center hover:border-slate-300 transition-colors">
+                            {isNicPdf ? (
+                              <div className="flex flex-col items-center gap-3 text-slate-500">
+                                <FileText className="w-10 h-10 text-secondary" />
+                                <span className="text-sm font-medium">PDF Document</span>
+                              </div>
+                            ) : resolvedNicImage ? (
+                              <img src={resolvedNicImage} alt="NIC" className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="flex flex-col items-center gap-2 text-slate-400">
+                                <FileText className="w-8 h-8 opacity-50" />
+                                <span className="text-xs">Not uploaded</span>
+                              </div>
+                            )}
+                          </div>
+                          {resolvedNicUrl && (
+                            <a href={resolvedNicUrl} target="_blank" rel="noopener noreferrer" className="block">
+                              <Button size="sm" variant="outline" className="w-full gap-2 rounded-lg text-sm font-medium hover:bg-slate-50">
+                                <ExternalLink className="w-4 h-4" /> View Full Document
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Payment Receipt */}
+                        <div className="space-y-3">
+                          <p className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-secondary" />
+                            Payment Receipt
+                          </p>
+                          <div className="w-full h-48 rounded-xl border-2 border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center hover:border-slate-300 transition-colors">
+                            {isPdf ? (
+                              <div className="flex flex-col items-center gap-3 text-slate-500">
+                                <FileText className="w-10 h-10 text-secondary" />
+                                <span className="text-sm font-medium">PDF Document</span>
+                              </div>
+                            ) : resolvedImageUrl ? (
+                              <img src={resolvedImageUrl} alt="Payment receipt" className="w-full h-full object-contain" />
+                            ) : (
+                              <div className="flex flex-col items-center gap-2 text-slate-400">
+                                <FileText className="w-8 h-8 opacity-50" />
+                                <span className="text-xs">Not uploaded</span>
+                              </div>
+                            )}
+                          </div>
+                          {resolvedReceiptUrl && (
+                            <div className="flex gap-2">
+                              <a href={resolvedReceiptUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                                <Button size="sm" variant="outline" className="w-full gap-2 rounded-lg text-sm font-medium hover:bg-slate-50">
+                                  <ExternalLink className="w-4 h-4" /> View
+                                </Button>
+                              </a>
+                              <a href={resolvedReceiptUrl} download className="flex-1">
+                                <Button size="sm" variant="outline" className="w-full gap-2 rounded-lg text-sm font-medium hover:bg-slate-50">
+                                  <Download className="w-4 h-4" /> Download
+                                </Button>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    </div>
+
+                    {/* Emergency contact */}
+                    {(viewMember.emergencyContact || viewMember.emergencyPhone) && (
+                      <div className="px-8 py-6 bg-white border-b border-slate-200">
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Emergency Contact</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                          {viewMember.emergencyContact && <Field label="Contact Name" value={viewMember.emergencyContact} />}
+                          {viewMember.emergencyPhone && <Field label="Phone Number" value={viewMember.emergencyPhone} />}
+                        </div>
                       </div>
                     )}
                   </div>
-                  <DialogFooter className="p-4 border-t bg-muted/20">
-                    <Button variant="outline" className="w-full" onClick={() => setViewMember(null)}>Close</Button>
-                  </DialogFooter>
+
+                  {/* ── Footer with action buttons ── */}
+                  <div className="px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+                    {status === "pending" && ms ? (
+                      <>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Final Decision</p>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            className="flex-1 h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 font-semibold rounded-lg transition-all"
+                            onClick={() => { openRejectDialog(viewMember); setViewMember(null); }}
+                          >
+                            <XCircle className="w-5 h-5 mr-2" /> Reject Application
+                          </Button>
+                          <Button
+                            className="flex-1 h-11 bg-gradient-to-r from-secondary to-secondary/90 text-primary hover:shadow-lg font-semibold rounded-lg transition-all"
+                            onClick={() => { handleApprove(ms.id, viewMember.fullName); setViewMember(null); }}
+                          >
+                            <CheckCircle className="w-5 h-5 mr-2" /> Approve Application
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <Button variant="outline" className="w-full h-11 rounded-lg font-semibold" onClick={() => setViewMember(null)}>
+                        Close
+                      </Button>
+                    )}
+                  </div>
                 </>
               );
             })()}
           </DialogContent>
         </Dialog>
-
         {/* Renewal Dialog */}
         <Dialog open={renewDialogOpen} onOpenChange={setRenewDialogOpen}>
           <DialogContent className="max-w-md p-0 overflow-hidden flex flex-col max-h-[90vh]">

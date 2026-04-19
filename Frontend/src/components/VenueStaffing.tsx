@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, MapPin, Users, Calendar, Plus, X, Search, UserPlus, Loader2, Check } from "lucide-react";
+import { ArrowLeft, MapPin, Users, Calendar, Plus, X, Search, UserPlus, Loader2, Check, Pencil, AlertTriangle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -12,7 +12,7 @@ import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 import { venueAPI, Venue as APIVenue } from "../api/venue";
 import { staffAPI, StaffMember as APIStaffMember } from "../api/staff";
-import { staffingAPI, VenueAssignment } from "../api/staffing";
+import { staffingAPI, VenueAssignment, BusyStaffInfo } from "../api/staffing";
 
 interface VenueStaffingProps {
   onBack: () => void;
@@ -32,6 +32,7 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
   const [selectedVenue, setSelectedVenue] = useState<string>(""); // Store ID as string for UI state
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<VenueAssignment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -47,11 +48,26 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
     endTime: "",
   });
 
+  // Form state for editing an assignment
+  const [editForm, setEditForm] = useState({
+    eventName: "",
+    eventDate: "",
+    startTime: "",
+    endTime: "",
+    role: "",
+    status: "",
+  });
+
   // State for data
   const [venues, setVenues] = useState<Venue[]>([]);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [assignments, setAssignments] = useState<VenueAssignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+
+  // Staff availability state
+  const [busyStaff, setBusyStaff] = useState<Record<string, BusyStaffInfo>>({});
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   // Fetch initial data (Venues and Staff)
   useEffect(() => {
@@ -91,7 +107,7 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
 
       try {
         const data = await staffingAPI.getByVenue(parseInt(selectedVenue));
-        setAssignments(data);
+        setAssignments(Array.isArray(data) ? data : []);
       } catch (error) {
         toast.error("Failed to load assignments");
       }
@@ -100,12 +116,37 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
     fetchAssignments();
   }, [selectedVenue]);
 
+  // Check staff availability when date/time changes in the assign dialog
+  useEffect(() => {
+    const checkAvailability = async () => {
+      const { eventDate, startTime, endTime } = assignmentForm;
+      if (!eventDate || !startTime || !endTime) {
+        setBusyStaff({});
+        return;
+      }
+
+      try {
+        setCheckingAvailability(true);
+        const busy = await staffingAPI.checkAvailability(eventDate, startTime, endTime);
+        setBusyStaff(busy);
+      } catch (error) {
+        console.error("Failed to check availability:", error);
+        setBusyStaff({});
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    const timeoutId = setTimeout(checkAvailability, 300); // Debounce
+    return () => clearTimeout(timeoutId);
+  }, [assignmentForm.eventDate, assignmentForm.startTime, assignmentForm.endTime]);
+
   const filteredStaff = staffList.filter((staff) => {
     const matchesSearch =
       staff.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staff.id.toString().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "all" || staff.role === roleFilter;
-    return matchesSearch && matchesRole && staff.available;
+    return matchesSearch && matchesRole;
   });
 
   const selectedVenueData = venues.find(v => v.id.toString() === selectedVenue);
@@ -139,6 +180,7 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
       endTime: "",
     });
     setSelectedStaffIds([]);
+    setBusyStaff({});
   };
 
   const openAssignDialog = () => {
@@ -155,9 +197,33 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
     setRemoveDialogOpen(true);
   };
 
+  const openEditDialog = (assignment: VenueAssignment) => {
+    setSelectedAssignment(assignment);
+    setEditForm({
+      eventName: assignment.eventName || "",
+      eventDate: assignment.eventDate ? new Date(assignment.eventDate).toISOString().split('T')[0] : "",
+      startTime: assignment.startTime || "",
+      endTime: assignment.endTime || "",
+      role: assignment.staffRole || "",
+      status: assignment.status || "scheduled",
+    });
+    setEditDialogOpen(true);
+  };
+
   const handleAssignStaff = async () => {
     if (selectedStaffIds.length === 0 || !assignmentForm.eventName || !assignmentForm.eventDate || !assignmentForm.startTime || !assignmentForm.endTime) {
       toast.error("Please fill all required fields and select at least one staff member");
+      return;
+    }
+
+    // Check if any selected staff are busy
+    const busySelected = selectedStaffIds.filter(id => busyStaff[id]);
+    if (busySelected.length > 0) {
+      const busyNames = busySelected.map(id => {
+        const staff = staffList.find(s => s.id.toString() === id);
+        return staff?.fullName || id;
+      }).join(", ");
+      toast.error(`Cannot assign busy staff: ${busyNames}. Please deselect them first.`);
       return;
     }
 
@@ -182,7 +248,7 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
 
       // Refresh assignments list
       const updatedAssignments = await staffingAPI.getByVenue(parseInt(selectedVenue));
-      setAssignments(updatedAssignments);
+      setAssignments(Array.isArray(updatedAssignments) ? updatedAssignments : []);
 
       toast.success(`${successfulAssignments.length} staff members assigned successfully`, {
         description: `Assigned to ${selectedVenueData?.name} for ${assignmentForm.eventName}`,
@@ -193,6 +259,44 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
     } catch (error: any) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to assign staff");
+    }
+  };
+
+  const handleUpdateAssignment = async () => {
+    if (!selectedAssignment) return;
+
+    if (!editForm.eventName || !editForm.eventDate || !editForm.startTime || !editForm.endTime) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      await staffingAPI.update(selectedAssignment.id, {
+        venueId: parseInt(selectedVenue),
+        staffId: selectedAssignment.staffId,
+        assignmentDate: editForm.eventDate,
+        startTime: editForm.startTime,
+        endTime: editForm.endTime,
+        eventName: editForm.eventName,
+        role: editForm.role,
+        status: editForm.status,
+      });
+
+      // Refresh assignments list
+      const updatedAssignments = await staffingAPI.getByVenue(parseInt(selectedVenue));
+      setAssignments(Array.isArray(updatedAssignments) ? updatedAssignments : []);
+
+      toast.success("Assignment updated successfully", {
+        description: `Updated ${selectedAssignment.staffName}'s assignment`,
+      });
+      setEditDialogOpen(false);
+      setSelectedAssignment(null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to update assignment");
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -435,14 +539,24 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
                               </div>
                             </div>
 
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-destructive hover:text-destructive flex-shrink-0"
-                              onClick={() => openRemoveDialog(assignment)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                onClick={() => openEditDialog(assignment)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => openRemoveDialog(assignment)}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -516,7 +630,21 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
 
               {/* Staff Selection */}
               <div className="space-y-4">
-                <h4 className="font-medium text-primary">Select Staff Member</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-primary">Select Staff Member</h4>
+                  {checkingAvailability && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Checking availability...
+                    </div>
+                  )}
+                  {!checkingAvailability && Object.keys(busyStaff).length > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-amber-600">
+                      <AlertTriangle className="w-3 h-3" />
+                      {Object.keys(busyStaff).length} staff busy
+                    </div>
+                  )}
+                </div>
                 <Separator />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -557,34 +685,74 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
                         };
                         const roleBadge = getRoleBadge(roleLabels[staff.role] || staff.role);
                         const isSelected = selectedStaffIds.includes(staff.id.toString());
+                        const isBusy = !!busyStaff[staff.id.toString()];
+                        const busyInfo = busyStaff[staff.id.toString()];
 
                         return (
                           <div
                             key={staff.id}
                             onClick={() => {
+                              if (isBusy) {
+                                toast.error(`${staff.fullName} is busy`, {
+                                  description: busyInfo
+                                    ? `Assigned to "${busyInfo.eventName}" at ${busyInfo.venueName} (${busyInfo.startTime} - ${busyInfo.endTime})`
+                                    : "Already assigned during this time slot"
+                                });
+                                return;
+                              }
                               setSelectedStaffIds(prev =>
                                 isSelected
                                   ? prev.filter(id => id !== staff.id.toString())
                                   : [...prev, staff.id.toString()]
                               );
                             }}
-                            className={`p-4 cursor-pointer transition-colors hover:bg-muted/50 ${isSelected ? "bg-secondary/10" : ""
-                              }`}
+                            className={`p-4 cursor-pointer transition-colors ${
+                              isBusy
+                                ? "bg-red-50/60 opacity-70 cursor-not-allowed"
+                                : isSelected
+                                  ? "bg-secondary/10 hover:bg-secondary/15"
+                                  : "hover:bg-muted/50"
+                            }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? "bg-secondary border-secondary text-primary" : "border-muted-foreground/30"
-                                  }`}>
-                                  {isSelected && <Check className="w-3 h-3" />}
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                  isBusy
+                                    ? "bg-red-100 border-red-300"
+                                    : isSelected
+                                      ? "bg-secondary border-secondary text-primary"
+                                      : "border-muted-foreground/30"
+                                }`}>
+                                  {isBusy ? (
+                                    <X className="w-3 h-3 text-red-500" />
+                                  ) : isSelected ? (
+                                    <Check className="w-3 h-3" />
+                                  ) : null}
                                 </div>
                                 <div>
-                                  <p className="font-medium">{staff.fullName}</p>
-                                  <p className="text-sm text-muted-foreground">{staff.id} • {staff.department}</p>
+                                  <p className={`font-medium ${isBusy ? "text-muted-foreground" : ""}`}>
+                                    {staff.fullName}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {staff.id} • {staff.department}
+                                  </p>
+                                  {isBusy && busyInfo && (
+                                    <p className="text-xs text-red-500 mt-0.5">
+                                      Busy: {busyInfo.eventName} at {busyInfo.venueName} ({busyInfo.startTime} - {busyInfo.endTime})
+                                    </p>
+                                  )}
                                 </div>
                               </div>
-                              <Badge variant="outline" className={roleBadge.className}>
-                                {roleLabels[staff.role] || staff.role}
-                              </Badge>
+                              <div className="flex items-center gap-2">
+                                {isBusy && (
+                                  <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 text-xs">
+                                    Busy
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className={roleBadge.className}>
+                                  {roleLabels[staff.role] || staff.role}
+                                </Badge>
+                              </div>
                             </div>
                           </div>
                         );
@@ -614,6 +782,124 @@ export function VenueStaffing({ onBack }: VenueStaffingProps) {
             </DialogFooter>
           </DialogContent>
 
+        </Dialog>
+
+        {/* Edit Assignment Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-md p-0 overflow-hidden flex flex-col max-h-[90vh]">
+            <DialogHeader className="p-6 border-b">
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-secondary" />
+                Update Assignment
+              </DialogTitle>
+              <DialogDescription>
+                Edit the assignment details for {selectedAssignment?.staffName}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              <div className="space-y-2">
+                <Label>Staff Member</Label>
+                <div className="p-3 bg-muted/50 rounded-lg border">
+                  <p className="font-medium">{selectedAssignment?.staffName}</p>
+                  <p className="text-sm text-muted-foreground">{selectedAssignment?.staffRole}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-event-name">Event Name *</Label>
+                <Input
+                  id="edit-event-name"
+                  value={editForm.eventName}
+                  onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
+                  placeholder="e.g., Annual Gala Dinner"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-event-date">Event Date *</Label>
+                <Input
+                  id="edit-event-date"
+                  type="date"
+                  value={editForm.eventDate}
+                  onChange={(e) => setEditForm({ ...editForm, eventDate: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-start-time">Start Time *</Label>
+                  <Input
+                    id="edit-start-time"
+                    type="time"
+                    value={editForm.startTime}
+                    onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-end-time">End Time *</Label>
+                  <Input
+                    id="edit-end-time"
+                    type="time"
+                    value={editForm.endTime}
+                    onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
+                  <SelectTrigger id="edit-role">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                    <SelectItem value="kitchen">Kitchen</SelectItem>
+                    <SelectItem value="inventory">Inventory</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select value={editForm.status} onValueChange={(value) => setEditForm({ ...editForm, status: value })}>
+                  <SelectTrigger id="edit-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="p-6 border-t bg-muted/20">
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-secondary text-primary hover:bg-secondary/90 font-bold shadow-md transition-all active:scale-95"
+                onClick={handleUpdateAssignment}
+                disabled={updating}
+              >
+                {updating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Update Assignment
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
 
         {/* Remove Assignment Dialog */}

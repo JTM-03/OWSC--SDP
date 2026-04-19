@@ -51,7 +51,7 @@ export function StaffManagement({ onBack }: StaffManagementProps) {
   const fetchStaff = async () => {
     try {
       const data = await staffAPI.getAll();
-      setAllStaff(data);
+      setAllStaff(Array.isArray(data) ? data : []);
     } catch (error) {
       toast.error("Failed to load staff members");
     } finally {
@@ -120,6 +120,12 @@ export function StaffManagement({ onBack }: StaffManagementProps) {
     // Password rules validation
     if (formData.password.length < 8 || !/[A-Z]/.test(formData.password) || !/[a-z]/.test(formData.password) || !/[0-9]/.test(formData.password) || !/[^A-Za-z0-9]/.test(formData.password)) {
       toast.error("Please ensure your password meets all requirements");
+      return;
+    }
+
+    // Phone validation
+    if (formData.phone && !/^0\d{9}$/.test(formData.phone)) {
+      toast.error("Phone number must be 10 digits starting with 0 (e.g. 07XXXXXXXX or 0112XXXXXX)");
       return;
     }
 

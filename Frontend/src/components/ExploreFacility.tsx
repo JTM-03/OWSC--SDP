@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { venueAPI, Venue } from "../api/venue";
 import { eventsAPI, Event as APIEvent } from "../api/events";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { getImageUrl } from "../utils/image";
 
 interface ExploreFacilityProps {
   onBack: () => void;
@@ -113,9 +114,7 @@ export function ExploreFacility({ onBack, onViewMemberships }: ExploreFacilityPr
                 <Card key={venue.id} className="border-none shadow-lg hover:shadow-xl transition-all overflow-hidden bg-card/50 backdrop-blur-sm">
                   <div className="aspect-video relative">
                     <ImageWithFallback
-                      src={venue.imageUrl
-                        ? (venue.imageUrl.startsWith('http') ? venue.imageUrl : `http://localhost:5000${venue.imageUrl}`)
-                        : "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop"}
+                      src={getImageUrl(venue.imageUrl) ?? "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=1000&auto=format&fit=crop"}
                       alt={venue.name}
                       className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
@@ -135,7 +134,7 @@ export function ExploreFacility({ onBack, onViewMemberships }: ExploreFacilityPr
                       </div>
                       <div className="flex items-center gap-2 text-primary">
                         <Badge variant="secondary" className="px-2 py-0 h-6">
-                          Rs. {venue.charge.toLocaleString()} {venue.pricingUnit || 'per person'}
+                          Rs. {venue.charge.toLocaleString()}
                         </Badge>
                       </div>
                     </div>

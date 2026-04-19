@@ -2,28 +2,109 @@ const express = require("express")
 const prisma = require("../lib/prisma")
 const { authenticate, requireRole } = require("../middleware/auth")
 const { NotFoundError, BadRequestError } = require("../utils/errors")
+const { parsePagination, paginationMeta } = require("../utils/pagination")
 
 const router = express.Router()
+
+/**
+ * @swagger
+ * /staff:
+ *   get:
+ *     summary: List all staff members with pagination (Admin)
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *         description: Filter by name or email
+ *     responses:
+ *       200:
+ *         description: Paginated staff list
+ *
+ * /staff/{id}/role:
+ *   put:
+ *     summary: Update a staff member's role (Admin)
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [role]
+ *             properties:
+ *               role: { type: string, enum: [member, staff, admin] }
+ *     responses:
+ *       200:
+ *         description: Role updated
+ *
+ * /staff/assign:
+ *   post:
+ *     summary: Assign a staff member to a venue (Admin)
+ *     tags: [Staff]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [staffId, venueId, shift]
+ *             properties:
+ *               staffId: { type: integer }
+ *               venueId: { type: integer }
+ *               shift:   { type: string, example: Morning }
+ *     responses:
+ *       200:
+ *         description: Staff assigned
+ */
 
 // GET /api/staff - List all staff users
 router.get("/", authenticate, requireRole('admin'), async (req, res, next) => {
     try {
-        const staff = await prisma.member.findMany({
-            where: {
-                role: { in: ['staff', 'admin'] }
-            },
-            select: {
-                id: true,
-                fullName: true,
-                email: true,
-                username: true,
-                role: true,
-                phone: true,
-                status: true,
-                registrationDate: true
-            }
-        })
-        res.json(staff)
+        const { skip, take, page, limit } = parsePagination(req.query)
+        const { search } = req.query
+
+        const where = {
+            role: { in: ['staff', 'admin'] },
+            ...(search && {
+                OR: [
+                    { fullName: { contains: search, mode: 'insensitive' } },
+                    { email:    { contains: search, mode: 'insensitive' } },
+                ]
+            })
+        }
+
+        const [staff, total] = await Promise.all([
+            prisma.member.findMany({
+                where,
+                select: {
+                    id: true, fullName: true, email: true, username: true,
+                    role: true, phone: true, status: true, registrationDate: true
+                },
+                skip,
+                take,
+            }),
+            prisma.member.count({ where })
+        ])
+
+        res.json({ data: staff, meta: paginationMeta(total, page, limit) })
     } catch (error) {
         next(error)
     }

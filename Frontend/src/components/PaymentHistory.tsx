@@ -13,6 +13,7 @@ import {
     TableRow,
 } from "./ui/table";
 import { paymentAPI, PaymentRecord } from "../api/payment";
+import api from "../api/axios";
 import { toast } from "sonner@2.0.3";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
 
@@ -47,18 +48,13 @@ export function PaymentHistory({ onBack }: PaymentHistoryProps) {
 
     const generateReceipt = async (payment: PaymentRecord, type: string) => {
         try {
-            // Initiate download
-            // We use standard window.location for download or fetch blob
-            const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5000/api/payments/receipt/${type}/${payment.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            // Use the axios instance so the HttpOnly cookie is sent automatically
+            const response = await api.get(
+                `payments/receipt/${type}/${payment.id}`,
+                { responseType: 'blob' }
+            );
 
-            if (!response.ok) throw new Error('Failed to generate receipt');
-
-            const blob = await response.blob();
+            const blob = new Blob([response.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

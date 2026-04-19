@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import logo from "figma:asset/7e8ee45ea4f6bbc4778bb2c0c1ed5bfb1ed79130.png";
-import { authAPI, setAuthToken, setUser } from "../api/auth";
+import { authAPI, setUser } from "../api/auth";
 import { toast } from "sonner@2.0.3";
 
 interface LoginPageProps {
@@ -42,11 +42,13 @@ export function LoginPage({ onLogin, onRegister, onStaffLogin, onBack }: LoginPa
     console.log('🔐 Login attempt with:', { email, password: '***' });
 
     try {
-      const response = await authAPI.login({ email, password });
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+      const response = await authAPI.login({ email: trimmedEmail, password: trimmedPassword });
       console.log('✅ Login successful:', response);
 
-      const { user, token } = response;
-      setAuthToken(token);
+      const { user } = response;
+      // Cookie is set automatically by the server
       setUser(user);
       toast.success("Welcome back!", {
         description: `Logged in as ${user.fullName}`
@@ -210,7 +212,7 @@ export function LoginPage({ onLogin, onRegister, onStaffLogin, onBack }: LoginPa
               {fpStep === 1 && "Forgot Password"}
               {fpStep === 2 && "Enter OTP"}
               {fpStep === 3 && "New Password"}
-              {fpStep === 0 && "Portal Sign In"}
+              {fpStep === 0 && "Sign In"}
             </h1>
             <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold">
               Old Wesleyites Sports Club
@@ -309,44 +311,105 @@ export function LoginPage({ onLogin, onRegister, onStaffLogin, onBack }: LoginPa
 
           {/* Step 3: New password */}
           {fpStep === 3 && (
-            <form onSubmit={handleResetPassword} className="space-y-5">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Lock className="w-8 h-8 text-green-600" />
+            <form onSubmit={handleResetPassword} className="space-y-0 animate-in slide-in-from-bottom-4 fade-in duration-500">
+              {/* Success banner */}
+              <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6">
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-4 h-4 text-green-600" />
                 </div>
-                <p className="text-sm text-muted-foreground">OTP verified! Create your new password below.</p>
+                <p className="text-sm font-medium text-green-800">Identity verified — set your new password below.</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPwd" className="font-bold text-xs uppercase text-muted-foreground">New Password</Label>
+
+              {/* New Password */}
+              <div className="mb-5">
+                <label htmlFor="newPwd" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                  New Password
+                </label>
                 <div className="relative">
-                  <Input
+                  <input
                     id="newPwd"
                     type={showNewPwd ? "text" : "password"}
-                    placeholder="Minimum 8 characters"
                     value={fpNewPassword}
                     onChange={(e) => setFpNewPassword(e.target.value)}
-                    required disabled={loading}
-                    className="bg-white border-muted h-12 pr-10"
+                    required
+                    disabled={loading}
+                    placeholder="Enter new password"
+                    className="w-full h-12 px-4 pr-11 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors disabled:opacity-50"
                   />
-                  <button type="button" onClick={() => setShowNewPwd(!showNewPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
-                    {showNewPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(!showNewPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {/* Password rules */}
+                {fpNewPassword.length > 0 && (
+                  <div className="mt-2 grid grid-cols-2 gap-1">
+                    {[
+                      { ok: fpNewPassword.length >= 8,        label: "8+ characters" },
+                      { ok: /[A-Z]/.test(fpNewPassword),      label: "Uppercase letter" },
+                      { ok: /[0-9]/.test(fpNewPassword),      label: "Number" },
+                      { ok: /[^A-Za-z0-9]/.test(fpNewPassword), label: "Special character" },
+                    ].map(({ ok, label }) => (
+                      <span key={label} className={`flex items-center gap-1 text-xs ${ok ? "text-green-600" : "text-slate-400"}`}>
+                        <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${ok ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"}`}>
+                          {ok ? "✓" : "·"}
+                        </span>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPwd" className="font-bold text-xs uppercase text-muted-foreground">Confirm Password</Label>
-                <Input
-                  id="confirmPwd"
-                  type="password"
-                  placeholder="Re-enter new password"
-                  value={fpConfirm}
-                  onChange={(e) => setFpConfirm(e.target.value)}
-                  required disabled={loading}
-                  className="bg-white border-muted h-12"
-                />
+
+              {/* Confirm Password */}
+              <div className="mb-6">
+                <label htmlFor="confirmPwd" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPwd"
+                    type={showNewPwd ? "text" : "password"}
+                    value={fpConfirm}
+                    onChange={(e) => setFpConfirm(e.target.value)}
+                    required
+                    disabled={loading}
+                    placeholder="Re-enter new password"
+                    className={`w-full h-12 px-4 pr-11 rounded-lg border text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors disabled:opacity-50 bg-white ${
+                      fpConfirm.length > 0
+                        ? fpConfirm === fpNewPassword
+                          ? "border-green-400"
+                          : "border-red-400"
+                        : "border-slate-300"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd(!showNewPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {fpConfirm.length > 0 && (
+                  <p className={`mt-1.5 text-xs font-medium ${fpConfirm === fpNewPassword ? "text-green-600" : "text-red-500"}`}>
+                    {fpConfirm === fpNewPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
+                  </p>
+                )}
               </div>
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 h-12 font-bold uppercase tracking-wider" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Reset Password
+
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90 h-12 font-bold uppercase tracking-wider rounded-lg shadow-md"
+                disabled={loading || fpNewPassword !== fpConfirm || fpNewPassword.length < 8}
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Reset Password
               </Button>
             </form>
           )}
