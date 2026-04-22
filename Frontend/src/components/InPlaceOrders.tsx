@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Plus, Minus, ShoppingCart, User, Loader2, Trash2, UserCheck } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -26,6 +26,8 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
   const [customerName, setCustomerName] = useState("");
   const [tableNumber, setTableNumber] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  // Generate a fresh checkoutId per order session — prevents double-charge on retry
+  const [checkoutId, setCheckoutId] = useState(() => crypto.randomUUID());
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,8 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
 
       await orderAPI.createOrder({
         orderType: 'Dine-in',
+        tableNumber: tableNumber.trim(),
+        checkoutId,
         items: orderItems.map(item => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity
@@ -120,6 +124,7 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
       setCustomerName("");
       setTableNumber("");
       setOrderItems([]);
+      setCheckoutId(crypto.randomUUID()); // fresh key for next order
     } catch (error) {
       console.error(error);
       toast.error("Failed to place order");
@@ -253,10 +258,16 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
                 <p className="font-semibold text-sm text-primary truncate">
                   {user?.fullName ?? user?.username ?? "Unknown Staff"}
                 </p>
+                {user?.username && user?.fullName && (
+                  <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                )}
               </div>
-              <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5 flex-shrink-0">
-                Staff ID #{user?.id}
-              </Badge>
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
+                  {user?.role === 'admin' ? 'Admin' : 'Staff'}
+                </Badge>
+                <span className="text-xs text-muted-foreground">ID #{user?.id}</span>
+              </div>
             </div>
 
             {/* Customer Details */}
@@ -364,7 +375,14 @@ export function InPlaceOrders({ onBack }: InPlaceOrdersProps) {
                 {user && (
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                     <UserCheck className="w-3.5 h-3.5 text-primary" />
-                    <span>Waiter: <span className="font-medium text-foreground">{user.fullName ?? user.username}</span></span>
+                    <span>
+                      Waiter: <span className="font-medium text-foreground">
+                        {user.fullName ?? user.username}
+                      </span>
+                      <span className="ml-1 text-muted-foreground/70">
+                        ({user.role === 'admin' ? 'Admin' : 'Staff'} · ID #{user.id})
+                      </span>
+                    </span>
                   </div>
                 )}
               </CardHeader>

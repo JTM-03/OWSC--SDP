@@ -47,6 +47,14 @@ router.post("/book", authenticate, upload.single('receipt'), async (req, res, ne
         if (isRestrictedDate(reservationDate)) {
             throw new BadRequestError("Cannot book tables on Sundays or Poya days.");
         }
+
+        // ── Rule: After 10 PM, no table bookings for today ───────────────────
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const reservationDateStr = reservationDate.split('T')[0]; // handle ISO strings
+        if (reservationDateStr === todayStr && now.getHours() >= 22) {
+            throw new BadRequestError("Table bookings for today are not accepted after 10:00 PM.");
+        }
         
         const count = parseInt(tableCount);
         if (isNaN(count) || count <= 0) {
@@ -87,26 +95,34 @@ router.post("/book", authenticate, upload.single('receipt'), async (req, res, ne
         });
         
         const dateObj = new Date(reservationDate);
-        const startOfDay = new Date(dateObj.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(dateObj.setHours(23, 59, 59, 999));
+        const startOfDay = new Date(dateObj);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateObj);
+        endOfDay.setHours(23, 59, 59, 999);
         
-        // Check for booked tables
+        // ── Day-lock: a table booked at ANY time today is unavailable all day ──
+        // This prevents double-booking the same physical table across different time slots.
         const existingReservations = await prisma.tableReservation.findMany({
             where: {
                 reservationDate: { gte: startOfDay, lte: endOfDay },
-                reservationTime: reservationTime,
                 status: { not: 'Cancelled' },
                 table: { location: normalizedLocation }
             },
             include: { table: true }
         });
         
-        if (existingReservations.length + count > maxTables) {
-            throw new BadRequestError(`Not enough tables available. Only ${maxTables - existingReservations.length} left.`);
+        // Count distinct tables already locked today (not just the same time slot)
+        const lockedTableIds = [...new Set(existingReservations.map(r => r.tableId))];
+        const availableCount = allLocationTables.length - lockedTableIds.length;
+
+        if (availableCount < count) {
+            throw new BadRequestError(
+                `Not enough tables available for ${new Date(reservationDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. ` +
+                `Only ${availableCount} table${availableCount !== 1 ? 's' : ''} left.`
+            );
         }
         
-        const bookedTableIds = existingReservations.map(r => r.tableId);
-        const availableTables = allLocationTables.filter(t => !bookedTableIds.includes(t.id));
+        const availableTables = allLocationTables.filter(t => !lockedTableIds.includes(t.id));
         
         const reservationsToCreate = [];
         for (let i = 0; i < count; i++) {

@@ -42,17 +42,37 @@ function initializeSocket(httpServer, options = {}) {
   });
 
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) return next(new Error('Authentication error'));
-    try {
-      const jwt = require('jsonwebtoken');
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      socket.userId = decoded.id;
-      socket.userRole = decoded.role;
-      next();
-    } catch {
-      next(new Error('Authentication error'));
+    const jwt = require('jsonwebtoken');
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+
+    // Strategy 1: token passed explicitly in handshake auth (legacy / non-browser clients)
+    const headerToken = socket.handshake.auth?.token;
+    if (headerToken) {
+      try {
+        const decoded = jwt.verify(headerToken, secret);
+        socket.userId = decoded.id;
+        socket.userRole = decoded.role;
+        return next();
+      } catch {
+        return next(new Error('Authentication error'));
+      }
     }
+
+    // Strategy 2: read the HttpOnly cookie sent automatically by the browser
+    const cookieHeader = socket.handshake.headers?.cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)token=([^;]+)/);
+    if (match) {
+      try {
+        const decoded = jwt.verify(decodeURIComponent(match[1]), secret);
+        socket.userId = decoded.id;
+        socket.userRole = decoded.role;
+        return next();
+      } catch {
+        return next(new Error('Authentication error'));
+      }
+    }
+
+    return next(new Error('Authentication error'));
   });
 
   io.on('connection', (socket) => {

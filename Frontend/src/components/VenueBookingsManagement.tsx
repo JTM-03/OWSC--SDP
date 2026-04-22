@@ -38,7 +38,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
     const [bookings, setBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Confirmed");
+    const [statusFilter, setStatusFilter] = useState("all");
     const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isViewOpen, setIsViewOpen] = useState(false);
@@ -110,8 +110,8 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
             const bookingDate2 = new Date(booking.bookingDate).toISOString().split('T')[0];
             if (bookingDate2 !== bookingDate) return false;
 
-            const bookingStart = booking.startTime;
-            const bookingEnd = booking.endTime;
+            const bookingStart = (booking.timeSlot || "").split(" - ")[0] || booking.startTime;
+            const bookingEnd = (booking.timeSlot || "").split(" - ")[1] || booking.endTime;
             
             // Check for time overlap
             return !(endTime <= bookingStart || startTime >= bookingEnd);
@@ -172,8 +172,8 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
         setEditForm({
             status: booking.bookingStatus,
             date: new Date(booking.bookingDate).toISOString().split('T')[0],
-            startTime: booking.startTime,
-            endTime: booking.endTime
+            startTime: (booking.timeSlot || "").split(" - ")[0] || booking.startTime || "",
+            endTime: (booking.timeSlot || "").split(" - ")[1] || booking.endTime || ""
         });
         setIsEditOpen(true);
     };
@@ -357,7 +357,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                                     <TableCell>
                                                         <div className="flex flex-col">
                                                             <span>{new Date(booking.bookingDate).toLocaleDateString()}</span>
-                                                            <span className="text-xs text-muted-foreground">{booking.startTime} - {booking.endTime}</span>
+                                                            <span className="text-xs text-muted-foreground">{booking.timeSlot || `${booking.startTime} - ${booking.endTime}`}</span>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
@@ -543,6 +543,24 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                         <span className="text-muted-foreground">Purpose</span>
                                         <div className="font-medium">{selectedBooking.purpose || 'Not specified'}</div>
                                     </div>
+                                    {/* Food & Beverages */}
+                                    <div className="col-span-2">
+                                        <span className="text-muted-foreground">Food & Beverages Requested</span>
+                                        <div className="font-medium">
+                                            {selectedBooking.foodRequired
+                                                ? <span className="text-green-700 font-semibold">Yes</span>
+                                                : <span className="text-muted-foreground">No</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    {selectedBooking.foodRequired && selectedBooking.foodDetails && (
+                                        <div className="col-span-2">
+                                            <span className="text-muted-foreground">Food Details</span>
+                                            <div className="font-medium mt-1 p-3 bg-secondary/10 border border-secondary/20 rounded-lg text-sm whitespace-pre-wrap">
+                                                {selectedBooking.foodDetails}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -693,7 +711,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                     </div>
                                     <div>
                                         <span className="text-muted-foreground">Time</span>
-                                        <div className="font-medium">{selectedBooking.startTime} - {selectedBooking.endTime}</div>
+                                        <div className="font-medium">{selectedBooking.timeSlot || `${selectedBooking.startTime} - ${selectedBooking.endTime}`}</div>
                                     </div>
                                 </div>
                             </div>
@@ -732,7 +750,7 @@ export function VenueBookingsManagement({ onBack }: VenueBookingsManagementProps
                                                 <div className="text-sm text-red-800 space-y-1">
                                                     {conflictingBookings.map((booking, idx) => (
                                                         <div key={idx}>
-                                                            • <span className="font-medium">{booking.member?.fullName}</span> - {booking.startTime} to {booking.endTime}
+                                                            • <span className="font-medium">{booking.member?.fullName}</span> - {(booking.timeSlot || `${booking.startTime} - ${booking.endTime}`)}
                                                         </div>
                                                     ))}
                                                 </div>

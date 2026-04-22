@@ -1,6 +1,14 @@
 const { PrismaClient } = require('@prisma/client')
 
-const prismaClient = new PrismaClient()
+// Switch to the test database when running in test mode
+const datasourceUrl =
+  process.env.NODE_ENV === 'test'
+    ? process.env.TEST_DATABASE_URL
+    : process.env.DATABASE_URL
+
+const prismaClient = new PrismaClient({
+  datasourceUrl,
+})
 
 const prisma = prismaClient.$extends({
     query: {

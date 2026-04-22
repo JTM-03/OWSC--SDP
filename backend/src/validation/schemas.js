@@ -148,6 +148,10 @@ const orderSchema = z.object({
     }),
     // paymentMethod is optional here — backend enforces cash rules separately
     paymentMethod: z.enum(['cash', 'online']).optional(),
+    // tableNumber is optional — provided by staff when recording in-place orders
+    tableNumber: z.string().optional(),
+    // checkoutId is a client-generated UUID for idempotency (Layer 1 protection)
+    checkoutId: z.string().uuid('checkoutId must be a valid UUID').optional(),
     items: z.array(z.object({
         menuItemId: z.number().int().positive(),
         // Hard cap: no single item quantity above 50 at schema level

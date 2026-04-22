@@ -354,6 +354,118 @@ async function sendBookingCancelledEmail(member, booking, venue, reason, cancell
     return sendEmail(member.email, subject, html);
 }
 
+/**
+ * Booking edited by admin — notifies member of changes
+ */
+async function sendBookingEditedEmail(member, booking, venue, changeDescription) {
+    const subject = `OWSC – Booking Updated (#${booking.id})`;
+    const bookingDate = new Date(booking.bookingDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#f8f5f0;">
+      <div style="background:#1a2b3c;padding:32px;text-align:center;">
+        <h1 style="color:#D4AF37;margin:0;font-size:28px;letter-spacing:2px;">OWSC</h1>
+        <p style="color:rgba(255,255,255,.7);margin:8px 0 0;font-size:12px;letter-spacing:3px;text-transform:uppercase;">Old Wesleyites Sports Club</p>
+      </div>
+      <div style="padding:40px 32px;background:#fff;border:1px solid #e8e0d0;">
+        <h2 style="color:#1a2b3c;margin:0 0 8px;">Booking Updated</h2>
+        <p style="color:#555;line-height:1.7;margin:0 0 24px;">Dear ${member.fullName},</p>
+        <p style="color:#555;line-height:1.7;margin:0 0 24px;">
+          Your venue booking has been updated by the administration.
+        </p>
+        <div style="background:#f0f9ff;border-left:4px solid #0ea5e9;padding:14px;border-radius:4px;margin:0 0 24px;">
+          <p style="color:#0c4a6e;margin:0;font-size:13px;line-height:1.6;">
+            <strong>Change:</strong> ${changeDescription}
+          </p>
+        </div>
+        <div style="background:#f8f5f0;border:1px solid #e8e0d0;border-radius:8px;padding:24px;margin:0 0 24px;">
+          <p style="color:#1a2b3c;font-weight:bold;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">Updated Booking Details</p>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;width:40%;">Booking ID</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">#${booking.id}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Venue</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">${venue?.name || 'N/A'}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Date</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">${bookingDate}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Time Slot</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">${booking.timeSlot || 'N/A'}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Status</td><td style="padding:6px 0;"><span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:bold;">${booking.bookingStatus}</span></td></tr>
+          </table>
+        </div>
+        <p style="color:#555;font-size:13px;line-height:1.6;">If you have any questions about these changes, please contact our administration team.</p>
+        <p style="color:#888;font-size:13px;">Best Regards,<br><strong style="color:#1a2b3c;">OWSC Administration</strong></p>
+      </div>
+      <div style="background:#f0ece4;padding:14px;text-align:center;font-size:11px;color:#999;">
+        &copy; ${new Date().getFullYear()} Old Wesleyites Sports Club. All rights reserved.
+      </div>
+    </div>`;
+    return sendEmail(member.email, subject, html);
+}
+
+/**
+ * Order status update email — sent to member when their order status changes
+ */
+async function sendOrderStatusEmail(member, order, status, statusMessage) {
+    const statusConfig = {
+        'Preparing': { label: 'Being Prepared',  color: '#2563eb', bg: '#dbeafe', emoji: '👨‍🍳' },
+        'Ready':     { label: 'Ready',            color: '#16a34a', bg: '#dcfce7', emoji: '✅' },
+        'Completed': { label: 'Completed',        color: '#16a34a', bg: '#dcfce7', emoji: '🎉' },
+        'Cancelled': { label: 'Cancelled',        color: '#dc2626', bg: '#fee2e2', emoji: '❌' },
+    };
+    const cfg = statusConfig[status] || { label: status, color: '#1a2b3c', bg: '#f8f5f0', emoji: '📋' };
+    const subject = `OWSC – Order #${order.id} ${cfg.label}`;
+
+    const itemsList = order.orderItems?.map(i =>
+        `<tr>
+          <td style="padding:5px 0;color:#555;font-size:13px;">${i.menuItem?.name || 'Item'}</td>
+          <td style="padding:5px 0;color:#555;font-size:13px;text-align:center;">×${i.quantity}</td>
+          <td style="padding:5px 0;color:#1a2b3c;font-size:13px;text-align:right;">Rs. ${(Number(i.unitPrice) * i.quantity).toLocaleString()}</td>
+        </tr>`
+    ).join('') || '';
+
+    const html = `
+    <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;background:#f8f5f0;">
+      <div style="background:#1a2b3c;padding:32px;text-align:center;">
+        <h1 style="color:#D4AF37;margin:0;font-size:28px;letter-spacing:2px;">OWSC</h1>
+        <p style="color:rgba(255,255,255,.7);margin:8px 0 0;font-size:12px;letter-spacing:3px;text-transform:uppercase;">Old Wesleyites Sports Club</p>
+      </div>
+      <div style="padding:40px 32px;background:#fff;border:1px solid #e8e0d0;">
+        <div style="text-align:center;margin:0 0 24px;">
+          <div style="font-size:48px;">${cfg.emoji}</div>
+          <h2 style="color:#1a2b3c;margin:8px 0 0;">Order ${cfg.label}</h2>
+        </div>
+        <p style="color:#555;line-height:1.7;margin:0 0 8px;">Dear ${member.fullName},</p>
+        <p style="color:#555;line-height:1.7;margin:0 0 24px;">${statusMessage}</p>
+
+        <!-- Status Badge -->
+        <div style="text-align:center;margin:0 0 24px;">
+          <span style="background:${cfg.bg};color:${cfg.color};padding:8px 20px;border-radius:20px;font-size:14px;font-weight:bold;">${cfg.label}</span>
+        </div>
+
+        <!-- Order Summary -->
+        <div style="background:#f8f5f0;border:1px solid #e8e0d0;border-radius:8px;padding:24px;margin:0 0 24px;">
+          <p style="color:#1a2b3c;font-weight:bold;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px;">Order Summary</p>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;width:40%;">Order ID</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">#${order.id}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Order Type</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">${order.orderType}</td></tr>
+            <tr><td style="padding:6px 0;color:#888;font-size:13px;">Total Amount</td><td style="padding:6px 0;color:#1a2b3c;font-weight:bold;font-size:13px;">Rs. ${Number(order.totalAmount).toLocaleString()}</td></tr>
+          </table>
+          ${itemsList ? `
+          <hr style="border:none;border-top:1px solid #e8e0d0;margin:16px 0;" />
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <th style="text-align:left;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:8px;">Item</th>
+              <th style="text-align:center;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:8px;">Qty</th>
+              <th style="text-align:right;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;padding-bottom:8px;">Price</th>
+            </tr>
+            ${itemsList}
+          </table>` : ''}
+        </div>
+
+        <p style="color:#888;font-size:13px;">Best Regards,<br><strong style="color:#1a2b3c;">OWSC Restaurant</strong></p>
+      </div>
+      <div style="background:#f0ece4;padding:14px;text-align:center;font-size:11px;color:#999;">
+        &copy; ${new Date().getFullYear()} Old Wesleyites Sports Club. All rights reserved.
+      </div>
+    </div>`;
+    return sendEmail(member.email, subject, html);
+}
+
 module.exports = {
     sendEmail,
     sendPasswordResetOTP,
@@ -363,4 +475,6 @@ module.exports = {
     sendBookingSubmittedEmail,
     sendBookingConfirmedEmail,
     sendBookingCancelledEmail,
+    sendBookingEditedEmail,
+    sendOrderStatusEmail,
 };

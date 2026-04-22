@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type React from "react";
 import { TrendingUp, Calendar, Package, Users, Clock, Loader2, LogOut, Eye, User, Shield, CheckCircle, XCircle, LayoutDashboard, ClipboardList, Boxes, UtensilsCrossed, Tag, BookOpen, UserCog, Users2, CalendarDays, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -25,6 +26,35 @@ import { OrderNotificationCenter } from "./OrderNotificationCenter";
 interface AdminDashboardProps {
   onNavigate: (page: string) => void;
   onLogout: () => void;
+}
+
+// ── Sidebar nav item with indicator-line active state ──────────────────────
+function SidebarItem({
+  value, label, Icon, active, onClick,
+}: {
+  value: string; label: string; Icon: React.ElementType; active: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full flex items-center gap-3 pl-3 pr-3 py-2.5 text-sm font-medium
+        transition-all duration-150 text-left relative rounded-md
+        ${active
+          ? "bg-primary/8 text-primary"
+          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+        }
+      `}
+    >
+      {/* Left indicator line */}
+      <span
+        className={`absolute left-0 top-1 bottom-1 w-[3px] rounded-full transition-all duration-150
+          ${active ? "bg-primary opacity-100" : "opacity-0"}`}
+      />
+      <Icon className={`w-[15px] h-[15px] flex-shrink-0 stroke-[1.5] ${active ? "text-primary" : ""}`} />
+      {label}
+    </button>
+  );
 }
 
 export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
@@ -147,33 +177,47 @@ export function AdminDashboard({ onNavigate, onLogout }: AdminDashboardProps) {
 
         {/* ── Sidebar ── */}
         <aside className="w-56 flex-shrink-0 bg-card border-r border-border sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto">
-          <nav className="p-3 space-y-1">
+          <nav className="p-3 pt-4 space-y-0.5">
+
+            {/* MAIN group */}
+            <p className="px-3 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Main</p>
             {[
-              { value: "overview",    label: "Overview",       icon: LayoutDashboard },
+              { value: "overview", label: "Overview", icon: LayoutDashboard },
+              { value: "orders",   label: "Orders",   icon: ClipboardList },
+              { value: "bookings", label: "Bookings", icon: BookOpen },
+            ].map(({ value, label, icon: Icon }) => (
+              <SidebarItem key={value} value={value} label={label} Icon={Icon} active={activeTab === value} onClick={() => setActiveTab(value)} />
+            ))}
+
+            {/* MANAGEMENT group */}
+            <p className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Management</p>
+            {[
+              { value: "menu",       label: "Menu",       icon: UtensilsCrossed },
+              { value: "inventory",  label: "Inventory",  icon: Boxes },
+              { value: "promotions", label: "Promotions", icon: Tag },
+              { value: "events",     label: "Events",     icon: CalendarDays },
+            ].map(({ value, label, icon: Icon }) => (
+              <SidebarItem key={value} value={value} label={label} Icon={Icon} active={activeTab === value} onClick={() => setActiveTab(value)} />
+            ))}
+
+            {/* PEOPLE group */}
+            <p className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">People</p>
+            {[
               { value: "members",     label: "Membership",     icon: Users },
-              { value: "orders",      label: "Orders",         icon: ClipboardList },
-              { value: "inventory",   label: "Inventory",      icon: Boxes },
-              { value: "menu",        label: "Menu",           icon: UtensilsCrossed },
-              { value: "promotions",  label: "Promotions",     icon: Tag },
-              { value: "bookings",    label: "Bookings",       icon: BookOpen },
               { value: "staff",       label: "Staff",          icon: UserCog },
               { value: "venue-staff", label: "Venue Staffing", icon: Users2 },
-              { value: "events",      label: "Events",         icon: CalendarDays },
-              { value: "reports",     label: "Reports",        icon: BarChart3 },
             ].map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                onClick={() => setActiveTab(value)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 text-left
-                  ${activeTab === value
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" />
-                {label}
-              </button>
+              <SidebarItem key={value} value={value} label={label} Icon={Icon} active={activeTab === value} onClick={() => setActiveTab(value)} />
             ))}
+
+            {/* ANALYTICS group */}
+            <p className="px-3 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Analytics</p>
+            {[
+              { value: "reports", label: "Reports", icon: BarChart3 },
+            ].map(({ value, label, icon: Icon }) => (
+              <SidebarItem key={value} value={value} label={label} Icon={Icon} active={activeTab === value} onClick={() => setActiveTab(value)} />
+            ))}
+
           </nav>
         </aside>
 

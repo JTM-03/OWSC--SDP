@@ -386,6 +386,8 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
         const endTime = req.body.endTime;
         const amount = parseFloat(req.body.amount);
         const paymentMethod = req.body.paymentMethod;
+        const foodRequired = req.body.foodRequired === 'true' || req.body.foodRequired === true;
+        const foodDetails = req.body.foodDetails || null;
 
         if (!amount || !paymentMethod) {
             throw new BadRequestError('Amount and payment method are required');
@@ -397,19 +399,54 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
             throw new BadRequestError('Cannot book venues on Sundays or Poya days.');
         }
 
-        // Reject past dates
+        // ── Rule: Venue hours are 18:00–23:00 only ───────────────────────────
+        const toMinutes = (t) => {
+            const [h, m] = t.split(':').map(Number);
+            return h * 60 + m;
+        };
+        const OPEN_MINUTES  = 18 * 60; // 18:00
+        const CLOSE_MINUTES = 23 * 60; // 23:00
+
+        if (toMinutes(startTime) < OPEN_MINUTES || toMinutes(endTime) > CLOSE_MINUTES) {
+            throw new BadRequestError('Venue bookings are only available between 6:00 PM and 11:00 PM.');
+        }
+        if (toMinutes(startTime) >= toMinutes(endTime)) {
+            throw new BadRequestError('End time must be after start time.');
+        }
+
+        // ── Rule: Venue bookings must be at least 1 day in advance ───────────
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const requestedDate = new Date(bookingDate);
         requestedDate.setHours(0, 0, 0, 0);
+        const isToday = requestedDate.getTime() === today.getTime();
+
+        // Reject past dates outright
         if (requestedDate < today) {
             throw new BadRequestError('Cannot book venues for past dates.');
         }
 
-        const memberId = req.user.id
+        // ── Rule: After 5 PM, no venue bookings for today ────────────────────
+        const nowHour = new Date().getHours();
+        if (isToday && nowHour >= 17) {
+            throw new BadRequestError('Same-day venue bookings are not accepted after 5:00 PM.');
+        }
+
+        // ── Rule: Food pre-order only allowed for future dates ───────────────
+        // Same-day bookings must order food separately through the restaurant.
+        if (foodRequired && foodDetails && isToday) {
+            throw new BadRequestError(
+                'Food pre-orders are not available for same-day bookings. ' +
+                'Please place your food order separately through the restaurant.'
+            );
+        }
+
+        const memberId = req.user.id;
         const dateObj = new Date(bookingDate);
-        const startOfDay = new Date(dateObj.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(dateObj.setHours(23, 59, 59, 999));
+        const startOfDay = new Date(dateObj);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(dateObj);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const existingBookings = await prisma.venueBooking.findMany({
             where: {
@@ -436,7 +473,9 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
                     venueId,
                     bookingDate: new Date(bookingDate),
                     timeSlot: `${startTime} - ${endTime}`,
-                    bookingStatus: 'Pending'
+                    bookingStatus: 'Pending',
+                    foodRequired,
+                    foodDetails: foodRequired ? foodDetails : null,
                 },
                 include: { venue: true }
             });
@@ -458,20 +497,22 @@ router.post("/bookings", authenticate, upload.single('receipt'), async (req, res
         });
 
         const { sendNotification } = require("../services/notificationService");
+        const { notifyUser } = require("../services/socketService");
+
         await sendNotification(
             memberId,
-            "Booking Confirmation Pending",
-            `Your booking for ${result.booking.venue.name} on ${new Date(bookingDate).toLocaleDateString()} is pending approval.`,
+            "Booking Received",
+            `Your booking for ${result.booking.venue.name} on ${new Date(bookingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} has been received and is pending payment verification.`,
             "info"
         );
 
-        // Send booking submitted email
-        const member = await prisma.member.findUnique({ where: { id: memberId }, select: { fullName: true, email: true } });
-        if (member?.email) {
-            const { sendBookingSubmittedEmail } = require("../services/emailService");
-            sendBookingSubmittedEmail(member, result.booking, result.booking.venue, result.payment)
-                .catch(err => console.error('Booking submitted email failed:', err.message));
-        }
+        // Push real-time notification to member's dashboard
+        notifyUser(memberId, {
+            type: 'BOOKING_RECEIVED',
+            title: 'Booking Received',
+            message: `Your booking for ${result.booking.venue.name} is pending payment verification.`,
+            bookingId: result.booking.id
+        });
 
         res.status(201).json({ message: 'Booking created successfully', booking: result.booking, payment: result.payment })
     } catch (error) {
@@ -513,12 +554,21 @@ router.put("/bookings/:id/cancel", authenticate, async (req, res, next) => {
         });
 
         const { sendNotification } = require("../services/notificationService");
+        const { notifyUser } = require("../services/socketService");
+
         await sendNotification(
             memberId,
             "Booking Cancelled",
-            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString()} has been cancelled.`,
+            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} has been cancelled.`,
             "alert"
         );
+
+        notifyUser(memberId, {
+            type: 'BOOKING_CANCELLED',
+            title: 'Booking Cancelled',
+            message: `Your booking for ${booking.venue.name} has been cancelled.`,
+            bookingId: parseInt(id)
+        });
 
         // Send cancellation email
         const member = await prisma.member.findUnique({ where: { id: memberId }, select: { fullName: true, email: true } });
@@ -573,12 +623,21 @@ router.put("/bookings/:id/admin-cancel", authenticate, requireRole('admin'), asy
         });
 
         const { sendNotification } = require("../services/notificationService");
+        const { notifyUser } = require("../services/socketService");
+
         await sendNotification(
             booking.memberId,
-            "Booking Cancelled by Admin",
-            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString()} has been cancelled. Reason: ${reason}`,
+            "Booking Cancelled by Administration",
+            `Your booking for ${booking.venue.name} on ${new Date(booking.bookingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} has been cancelled. Reason: ${reason}`,
             "alert"
         );
+
+        notifyUser(booking.memberId, {
+            type: 'BOOKING_CANCELLED',
+            title: 'Booking Cancelled by Administration',
+            message: `Your booking for ${booking.venue.name} has been cancelled. Reason: ${reason || 'Contact admin for details.'}`,
+            bookingId: parseInt(id)
+        });
 
         // Send cancellation email to member
         if (booking.member?.email) {
@@ -617,12 +676,22 @@ router.put("/bookings/:id/verify-payment", authenticate, requireRole('admin'), a
         });
 
         const { sendNotification } = require("../services/notificationService");
+        const { notifyUser } = require("../services/socketService");
+
         await sendNotification(
             booking.memberId,
-            "Booking Confirmed!",
-            `Your payment for ${updated.venue.name} has been verified and booking is confirmed.`,
+            "Booking Confirmed! ✓",
+            `Your booking for ${updated.venue.name} on ${new Date(updated.bookingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} has been confirmed. Time: ${updated.timeSlot}.`,
             "success"
         );
+
+        // Real-time push to member's dashboard
+        notifyUser(booking.memberId, {
+            type: 'BOOKING_CONFIRMED',
+            title: 'Booking Confirmed!',
+            message: `Your booking for ${updated.venue.name} on ${new Date(updated.bookingDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} is confirmed.`,
+            bookingId: updated.id
+        });
 
         // Send booking confirmed email to member
         if (updated.member?.email) {
@@ -657,6 +726,36 @@ router.put("/bookings/:id", authenticate, requireRole('admin'), async (req, res,
             data,
             include: { venue: true, member: true }
         });
+
+        // Notify member of the change
+        const { sendNotification } = require("../services/notificationService");
+        const { notifyUser } = require("../services/socketService");
+        const { sendBookingEditedEmail } = require("../services/emailService");
+
+        const changeDesc = bookingStatus
+            ? `Status updated to ${bookingStatus}`
+            : bookingDate
+            ? `Date/time updated`
+            : 'Booking details updated';
+
+        await sendNotification(
+            booking.memberId,
+            "Booking Updated",
+            `Your booking for ${booking.venue?.name} has been updated. ${changeDesc}.`,
+            "info"
+        );
+
+        notifyUser(booking.memberId, {
+            type: 'BOOKING_UPDATED',
+            title: 'Booking Updated',
+            message: `Your booking for ${booking.venue?.name} has been updated. ${changeDesc}.`,
+            bookingId: booking.id
+        });
+
+        if (booking.member?.email) {
+            sendBookingEditedEmail(booking.member, booking, booking.venue, changeDesc)
+                .catch(err => console.error('Booking edit email failed:', err.message));
+        }
 
         res.json({ message: "Booking updated successfully", booking });
     } catch (error) {

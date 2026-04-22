@@ -428,44 +428,39 @@ export function MenuManagement({ onBack }: MenuManagementProps) {
                             </p>
                           </div>
 
-                          {/* Action Buttons with Better Hierarchy */}
+                          {/* Action Buttons */}
                           <div className="flex flex-col gap-2">
-                            {/* Primary Actions Row */}
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="flex-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                                onClick={() => openEditDialog(item)}
-                              >
-                                <Edit className="w-3.5 h-3.5 mr-1.5" />
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant={isAvailable ? "outline" : "default"}
-                                className={
-                                  isAvailable 
-                                    ? "flex-1 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300" 
-                                    : "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                }
-                                onClick={() => toggleAvailability(item)}
-                              >
-                                {isAvailable ? (
-                                  <>
-                                    <ToggleLeft className="w-3.5 h-3.5 mr-1.5" />
-                                    Unavailable
-                                  </>
-                                ) : (
-                                  <>
-                                    <ToggleRight className="w-3.5 h-3.5 mr-1.5" />
-                                    Available
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-
-                            {/* Destructive Action Row */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                              onClick={() => openEditDialog(item)}
+                            >
+                              <Edit className="w-3.5 h-3.5 mr-1.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={isAvailable ? "outline" : "default"}
+                              className={
+                                isAvailable
+                                  ? "w-full hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300"
+                                  : "w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                              }
+                              onClick={() => toggleAvailability(item)}
+                            >
+                              {isAvailable ? (
+                                <>
+                                  <ToggleLeft className="w-3.5 h-3.5 mr-1.5" />
+                                  Mark Unavailable
+                                </>
+                              ) : (
+                                <>
+                                  <ToggleRight className="w-3.5 h-3.5 mr-1.5" />
+                                  Mark Available
+                                </>
+                              )}
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"

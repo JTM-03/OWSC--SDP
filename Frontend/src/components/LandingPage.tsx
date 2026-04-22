@@ -77,49 +77,53 @@ export function LandingPage({ onGetStarted, onLogin, onExploreFacility }: Landin
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <Card className="border-2 hover:border-secondary transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="w-14 h-14 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                  <Calendar className="w-8 h-8 text-secondary" />
+            {/* Sports Facilities */}
+            <Card className="border-0 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+              <CardHeader className="items-center text-center pt-8 pb-6 px-6">
+                <div className="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-5">
+                  <Calendar className="w-7 h-7 stroke-[1.5] text-primary" />
                 </div>
-                <CardTitle className="text-left">Sports Facilities</CardTitle>
-                <CardDescription className="text-left">
+                <CardTitle className="font-sans font-bold text-base tracking-tight mb-2">Sports Facilities</CardTitle>
+                <CardDescription className="font-sans text-sm leading-relaxed text-center">
                   Cricket grounds, tennis courts, swimming pools, and more
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-2 hover:border-secondary transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="w-14 h-14 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                  <UtensilsCrossed className="w-8 h-8 text-secondary" />
+            {/* Fine Dining */}
+            <Card className="border-0 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+              <CardHeader className="items-center text-center pt-8 pb-6 px-6">
+                <div className="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-5">
+                  <UtensilsCrossed className="w-7 h-7 stroke-[1.5] text-primary" />
                 </div>
-                <CardTitle>Fine Dining</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-sans font-bold text-base tracking-tight mb-2">Fine Dining</CardTitle>
+                <CardDescription className="font-sans text-sm leading-relaxed text-center">
                   Authentic Sri Lankan cuisine and international favorites
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-2 hover:border-secondary transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="w-14 h-14 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-8 h-8 text-secondary" />
+            {/* Event Venues */}
+            <Card className="border-0 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+              <CardHeader className="items-center text-center pt-8 pb-6 px-6">
+                <div className="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-5">
+                  <Users className="w-7 h-7 stroke-[1.5] text-primary" />
                 </div>
-                <CardTitle>Event Venues</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-sans font-bold text-base tracking-tight mb-2">Event Venues</CardTitle>
+                <CardDescription className="font-sans text-sm leading-relaxed text-center">
                   Function halls for weddings, corporate events, and celebrations
                 </CardDescription>
               </CardHeader>
             </Card>
 
-            <Card className="border-2 hover:border-secondary transition-all hover:shadow-lg">
-              <CardHeader>
-                <div className="w-14 h-14 bg-secondary/20 rounded-lg flex items-center justify-center mb-4">
-                  <Award className="w-8 h-8 text-secondary" />
+            {/* Exclusive Access */}
+            <Card className="border-0 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+              <CardHeader className="items-center text-center pt-8 pb-6 px-6">
+                <div className="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center mb-5">
+                  <Award className="w-7 h-7 stroke-[1.5] text-primary" />
                 </div>
-                <CardTitle>Exclusive Access</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-sans font-bold text-base tracking-tight mb-2">Exclusive Access</CardTitle>
+                <CardDescription className="font-sans text-sm leading-relaxed text-center">
                   Members-only events, tournaments, and social gatherings
                 </CardDescription>
               </CardHeader>
@@ -192,7 +196,7 @@ export function LandingPage({ onGetStarted, onLogin, onExploreFacility }: Landin
                   <Mail className="w-6 h-6 text-secondary flex-shrink-0 mt-1" />
                   <div>
                     <h4 className="text-white mb-1">Email</h4>
-                    <p className="text-white/80">info@owsc.lk</p>
+                    <p className="text-white/80">owsc.admin@gmail.com</p>
                   </div>
                 </div>
 

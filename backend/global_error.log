@@ -4486,3 +4486,613 @@ TypeError: Cannot read properties of undefined (reading 'map')
     at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
     at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
     at authenticate (D:\restaurant-management-system\backend\src\middleware\auth.js:42:9)
+
+[2026-04-19T11:33:37.002Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:33:37.072Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:33:37.136Z] 500 ERROR: PUT /api/venues/bookings/undefined/cancel
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:501:51
+
+  498 const memberId = req.user.id;
+  499 const { reason } = req.body;
+  500 
+→ 501 const booking = await prisma.venueBooking.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          venue: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\venues.js:501:25
+
+[2026-04-19T11:33:49.698Z] 500 ERROR: POST /api/deliveries
+PrismaClientValidationError: 
+Invalid `tx.delivery.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:133:51
+
+  130 
+  131 // Create Delivery in Transaction
+  132 const delivery = await prisma.$transaction(async (tx) => {
+→ 133     const newDelivery = await tx.delivery.create({
+            data: {
+              supplierId: 99801,
+              deliveryDate: new Date("2026-04-19T11:33:49.676Z"),
+              deliveryStatus: "On-Process",
+              deliveryItems: {
+                create: [
+                  {
+                    productId: 99701,
+                    quantity: 50
+                  }
+                ]
+              }
+            },
+            include: {
+              deliveryItems: {
+                include: {
+                  product: true
+                }
+              },
+              supplier: true
+            }
+          })
+
+Argument `unitPrice` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:133:33
+    at Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:132:26
+
+[2026-04-19T11:33:49.765Z] 500 ERROR: PUT /api/deliveries/undefined/status
+PrismaClientValidationError: 
+Invalid `prisma.delivery.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:173:55
+
+  170 const deliveryId = parseInt(id)
+  171 
+  172 // 1. Check if delivery exists and its current status
+→ 173 const currentDelivery = await prisma.delivery.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          deliveryItems: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:173:33
+
+[2026-04-19T11:36:28.929Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:36:29.005Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:36:29.076Z] 500 ERROR: PUT /api/venues/bookings/undefined/cancel
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:501:51
+
+  498 const memberId = req.user.id;
+  499 const { reason } = req.body;
+  500 
+→ 501 const booking = await prisma.venueBooking.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          venue: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\venues.js:501:25
+
+[2026-04-19T11:36:34.947Z] 500 ERROR: POST /api/deliveries
+PrismaClientValidationError: 
+Invalid `tx.delivery.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:133:51
+
+  130 
+  131 // Create Delivery in Transaction
+  132 const delivery = await prisma.$transaction(async (tx) => {
+→ 133     const newDelivery = await tx.delivery.create({
+            data: {
+              supplierId: 99801,
+              deliveryDate: new Date("2026-04-19T11:36:34.930Z"),
+              deliveryStatus: "On-Process",
+              deliveryItems: {
+                create: [
+                  {
+                    productId: 99701,
+                    quantity: 50
+                  }
+                ]
+              }
+            },
+            include: {
+              deliveryItems: {
+                include: {
+                  product: true
+                }
+              },
+              supplier: true
+            }
+          })
+
+Argument `unitPrice` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:133:33
+    at Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:132:26
+
+[2026-04-19T11:36:35.017Z] 500 ERROR: PUT /api/deliveries/undefined/status
+PrismaClientValidationError: 
+Invalid `prisma.delivery.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:173:55
+
+  170 const deliveryId = parseInt(id)
+  171 
+  172 // 1. Check if delivery exists and its current status
+→ 173 const currentDelivery = await prisma.delivery.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          deliveryItems: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:173:33
+
+[2026-04-19T11:37:32.513Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:37:32.583Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:37:32.647Z] 500 ERROR: PUT /api/venues/bookings/undefined/cancel
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:501:51
+
+  498 const memberId = req.user.id;
+  499 const { reason } = req.body;
+  500 
+→ 501 const booking = await prisma.venueBooking.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          venue: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\venues.js:501:25
+
+[2026-04-19T11:37:35.999Z] 500 ERROR: POST /api/deliveries
+PrismaClientValidationError: 
+Invalid `tx.delivery.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:133:51
+
+  130 
+  131 // Create Delivery in Transaction
+  132 const delivery = await prisma.$transaction(async (tx) => {
+→ 133     const newDelivery = await tx.delivery.create({
+            data: {
+              supplierId: 99801,
+              deliveryDate: new Date("2026-04-19T11:37:35.983Z"),
+              deliveryStatus: "On-Process",
+              deliveryItems: {
+                create: [
+                  {
+                    productId: 99701,
+                    quantity: 50
+                  }
+                ]
+              }
+            },
+            include: {
+              deliveryItems: {
+                include: {
+                  product: true
+                }
+              },
+              supplier: true
+            }
+          })
+
+Argument `unitPrice` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:133:33
+    at Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:132:26
+
+[2026-04-19T11:37:36.065Z] 500 ERROR: PUT /api/deliveries/undefined/status
+PrismaClientValidationError: 
+Invalid `prisma.delivery.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:173:55
+
+  170 const deliveryId = parseInt(id)
+  171 
+  172 // 1. Check if delivery exists and its current status
+→ 173 const currentDelivery = await prisma.delivery.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          deliveryItems: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:173:33
+
+[2026-04-19T11:38:54.105Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:38:54.171Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:38:54.231Z] 500 ERROR: PUT /api/venues/bookings/undefined/cancel
+PrismaClientValidationError: 
+Invalid `prisma.venueBooking.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\venues.js:501:51
+
+  498 const memberId = req.user.id;
+  499 const { reason } = req.body;
+  500 
+→ 501 const booking = await prisma.venueBooking.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          venue: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\venues.js:501:25
+
+[2026-04-19T11:39:00.097Z] 500 ERROR: POST /api/deliveries
+PrismaClientValidationError: 
+Invalid `tx.delivery.create()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:133:51
+
+  130 
+  131 // Create Delivery in Transaction
+  132 const delivery = await prisma.$transaction(async (tx) => {
+→ 133     const newDelivery = await tx.delivery.create({
+            data: {
+              supplierId: 99801,
+              deliveryDate: new Date("2026-04-19T11:39:00.082Z"),
+              deliveryStatus: "On-Process",
+              deliveryItems: {
+                create: [
+                  {
+                    productId: 99701,
+                    quantity: 50
+                  }
+                ]
+              }
+            },
+            include: {
+              deliveryItems: {
+                include: {
+                  product: true
+                }
+              },
+              supplier: true
+            }
+          })
+
+Argument `unitPrice` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:133:33
+    at Proxy._transactionWithCallback (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:8000)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:132:26
+
+[2026-04-19T11:39:00.157Z] 500 ERROR: PUT /api/deliveries/undefined/status
+PrismaClientValidationError: 
+Invalid `prisma.delivery.findUnique()` invocation in
+D:\restaurant-management-system\backend\src\routes\deliveries.js:173:55
+
+  170 const deliveryId = parseInt(id)
+  171 
+  172 // 1. Check if delivery exists and its current status
+→ 173 const currentDelivery = await prisma.delivery.findUnique({
+        where: {
+      +   id: Int
+        },
+        include: {
+          deliveryItems: true
+        }
+      })
+
+Argument `id` is missing.
+    at wn (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:121:6307)
+    at Array.$allOperations (D:\restaurant-management-system\backend\src\lib\prisma.js:17:32)
+    at l (D:\restaurant-management-system\backend\node_modules\@prisma\client\runtime\library.js:130:9633)
+    at D:\restaurant-management-system\backend\src\routes\deliveries.js:173:33
+
+[2026-04-19T11:41:04.318Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)
+
+[2026-04-19T11:42:15.150Z] 500 ERROR: POST /api/venues/bookings
+ZodError: [
+  {
+    "origin": "string",
+    "code": "invalid_format",
+    "format": "datetime",
+    "pattern": "/^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$/",
+    "path": [
+      "bookingDate"
+    ],
+    "message": "Invalid date format"
+  }
+]
+    at parse (D:\restaurant-management-system\backend\src\routes\venues.js:394:23)
+    at Layer.handleRequest (D:\restaurant-management-system\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\restaurant-management-system\backend\node_modules\router\lib\route.js:157:13)
+    at done (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:59:7)
+    at indicateDone (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:63:68)
+    at Multipart.<anonymous> (D:\restaurant-management-system\backend\node_modules\multer\lib\make-middleware.js:187:7)
+    at Multipart.emit (node:events:518:28)
+    at emitCloseNT (node:internal/streams/destroy:148:10)
+    at processTicksAndRejections (node:internal/process/task_queues:89:21)

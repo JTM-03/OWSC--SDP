@@ -426,3 +426,31 @@ Error: Email already registered
 [2026-04-15T11:01:45.428Z] REGISTRATION ERROR:
 Error: Email already registered
     at D:\restaurant-management-system\backend\src\routes\auth.js:73:19
+
+[2026-04-19T11:33:47.725Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:36:45.831Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:37:47.353Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:39:05.036Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:41:28.726Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:42:25.928Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19
+
+[2026-04-19T11:43:55.908Z] REGISTRATION ERROR:
+Error: Email already registered
+    at D:\restaurant-management-system\backend\src\routes\auth.js:92:19

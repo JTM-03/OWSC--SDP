@@ -703,7 +703,7 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
                   </div>
 
                   {/* ── Body with better spacing ── */}
-                  <div className="overflow-y-auto flex-1 min-h-0 bg-slate-50 scroll-smooth">
+                  <div className="overflow-y-scroll flex-1 min-h-0 bg-slate-50 scroll-smooth">
 
                     {/* Contact info section */}
                     <div className="px-8 py-6 bg-white border-b border-slate-200">
@@ -844,22 +844,22 @@ export function MembershipManagement({ onBack }: MembershipManagementProps) {
 
                   {/* ── Footer with action buttons ── */}
                   <div className="px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
-                    {status === "pending" && ms ? (
+                    {ms ? (
                       <>
-                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Final Decision</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Actions</p>
                         <div className="flex gap-3">
                           <Button
                             variant="outline"
                             className="flex-1 h-11 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 font-semibold rounded-lg transition-all"
                             onClick={() => { openRejectDialog(viewMember); setViewMember(null); }}
                           >
-                            <XCircle className="w-5 h-5 mr-2" /> Reject Application
+                            <XCircle className="w-5 h-5 mr-2" /> Reject
                           </Button>
                           <Button
                             className="flex-1 h-11 bg-gradient-to-r from-secondary to-secondary/90 text-primary hover:shadow-lg font-semibold rounded-lg transition-all"
                             onClick={() => { handleApprove(ms.id, viewMember.fullName); setViewMember(null); }}
                           >
-                            <CheckCircle className="w-5 h-5 mr-2" /> Approve Application
+                            <CheckCircle className="w-5 h-5 mr-2" /> Approve
                           </Button>
                         </div>
                       </>

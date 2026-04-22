@@ -1,129 +1,101 @@
 import { useEffect, useRef, useState } from 'react';
-import { orderAPI, Order } from '../api/order';
+import { io, Socket } from 'socket.io-client';
 
 interface UseSocketOptions {
   enabled?: boolean;
   onNewOrder?: (order: any) => void;
   onOrderStatusUpdate?: (data: any) => void;
   onNotification?: (notification: any) => void;
+  /** @deprecated kept for API compatibility — no longer used */
   pollInterval?: number;
 }
 
 /**
- * Polling-based hook that mimics a real-time socket interface.
+ * Real-time Socket.io hook.
  *
- * KEY DESIGN: callbacks are stored in refs so they never appear in the
- * dependency array of useEffect/useCallback. This prevents the classic
- * "new function reference → effect re-runs → infinite loop" problem.
+ * Connects to the backend using the HttpOnly JWT cookie that the browser
+ * sends automatically — no token extraction needed.
+ *
+ * Rooms on the server:
+ *   user:{id}    — personal notifications (order status, booking updates)
+ *   admin-staff  — new order alerts for staff/admin
+ *
+ * Events listened to:
+ *   order:new          → onNewOrder
+ *   order:statusUpdate → onOrderStatusUpdate
+ *   notification       → onNotification
  */
 export function useSocket(options: UseSocketOptions = {}) {
-  const {
-    enabled = true,
-    onNewOrder,
-    onOrderStatusUpdate,
-    onNotification,
-    pollInterval = 8000,   // 8 s is plenty for a notification poll
-  } = options;
+  const { enabled = true, onNewOrder, onOrderStatusUpdate, onNotification } = options;
 
   const [isConnected, setIsConnected] = useState(false);
 
-  // ── Stable refs for callbacks ──────────────────────────────────────────
-  // Storing callbacks in refs means their identity never changes, so they
-  // are safe to call from inside the interval without being listed as deps.
-  const onNewOrderRef        = useRef(onNewOrder);
-  const onOrderStatusRef     = useRef(onOrderStatusUpdate);
-  const onNotificationRef    = useRef(onNotification);
+  // Store callbacks in refs so the effect never needs to re-run when they change
+  const onNewOrderRef     = useRef(onNewOrder);
+  const onStatusRef       = useRef(onOrderStatusUpdate);
+  const onNotificationRef = useRef(onNotification);
 
-  // Keep refs current on every render without triggering effects
   onNewOrderRef.current     = onNewOrder;
-  onOrderStatusRef.current  = onOrderStatusUpdate;
+  onStatusRef.current       = onOrderStatusUpdate;
   onNotificationRef.current = onNotification;
-
-  // ── Polling state ──────────────────────────────────────────────────────
-  const knownOrdersRef  = useRef<Map<number, string>>(new Map()); // id → status
-  const initializedRef  = useRef(false);
-  const isConnectedRef  = useRef(false); // avoid setState on every successful poll
 
   useEffect(() => {
     if (!enabled) return;
 
-    let cancelled = false;
+    // Determine the socket server URL.
+    // In dev: Vite proxy forwards /api → localhost:5000, but Socket.io needs
+    // a direct connection to the backend origin.
+    // In production: same origin (Nginx proxies /socket.io/ → backend).
+    const socketUrl =
+      import.meta.env.DEV
+        ? 'http://localhost:5000'   // dev: connect directly to backend
+        : window.location.origin;  // prod: same origin, Nginx handles the proxy
 
-    async function poll() {
-      if (cancelled) return;
-      try {
-        const orders: Order[] = await orderAPI.getAllOrders();
-        if (cancelled) return;
+    const socket: Socket = io(socketUrl, {
+      // The browser sends the HttpOnly cookie automatically — no manual token needed
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 10000,
+    });
 
-        const isFirstRun = !initializedRef.current;
+    socket.on('connect', () => {
+      console.log('🔌 Socket connected:', socket.id);
+      setIsConnected(true);
+    });
 
-        orders.forEach((order) => {
-          const prevStatus = knownOrdersRef.current.get(order.id);
+    socket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
+      setIsConnected(false);
+    });
 
-          if (prevStatus === undefined) {
-            // Brand-new order — only notify after the initial snapshot
-            if (!isFirstRun) {
-              onNewOrderRef.current?.({
-                type: 'NEW_ORDER',
-                title: 'New Order Placed',
-                message: `${order.member?.fullName ?? 'A member'} placed a new ${order.orderType} order`,
-                orderId: order.id,
-                orderType: order.orderType,
-                memberName: order.member?.fullName ?? 'Member',
-                memberId: order.memberId,
-                totalAmount: order.totalAmount,
-                itemCount: order.orderItems?.length ?? 0,
-                orderStatus: order.orderStatus,
-                timestamp: new Date(),
-              });
-            }
-          } else if (prevStatus !== order.orderStatus) {
-            // Status changed on a known order
-            onOrderStatusRef.current?.({
-              type: 'ORDER_STATUS_UPDATE',
-              title: 'Order Status Updated',
-              message: `Order #${order.id} changed from ${prevStatus} to ${order.orderStatus}`,
-              orderId: order.id,
-              orderStatus: order.orderStatus,
-              previousStatus: prevStatus,
-              memberName: order.member?.fullName ?? 'Member',
-              memberId: order.memberId,
-              timestamp: new Date(),
-            });
-          }
+    socket.on('connect_error', (err) => {
+      console.warn('🔌 Socket connection error:', err.message);
+      setIsConnected(false);
+    });
 
-          knownOrdersRef.current.set(order.id, order.orderStatus);
-        });
+    // ── New order placed by a member ──────────────────────────────────────
+    socket.on('order:new', (data) => {
+      onNewOrderRef.current?.(data);
+    });
 
-        if (isFirstRun) initializedRef.current = true;
+    // ── Order status changed (kitchen update) ─────────────────────────────
+    socket.on('order:statusUpdate', (data) => {
+      onStatusRef.current?.(data);
+    });
 
-        // Only call setState when the value actually changes
-        if (!isConnectedRef.current) {
-          isConnectedRef.current = true;
-          setIsConnected(true);
-        }
-      } catch {
-        if (!cancelled && isConnectedRef.current) {
-          isConnectedRef.current = false;
-          setIsConnected(false);
-        }
-      }
-    }
-
-    // Initial poll, then on interval
-    poll();
-    const id = setInterval(poll, pollInterval);
+    // ── Generic notification (booking confirmed, payment verified, etc.) ──
+    socket.on('notification', (data) => {
+      onNotificationRef.current?.(data);
+    });
 
     return () => {
-      cancelled = true;
-      clearInterval(id);
-      // Reset state for next mount
-      initializedRef.current  = false;
-      isConnectedRef.current  = false;
-      knownOrdersRef.current.clear();
+      socket.disconnect();
+      setIsConnected(false);
     };
-    // pollInterval and enabled are the only real deps — callbacks are via refs
-  }, [enabled, pollInterval]);
+  }, [enabled]); // only re-run if enabled changes
 
   return { isConnected };
 }

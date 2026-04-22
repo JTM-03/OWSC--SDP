@@ -123,6 +123,8 @@ model VenueBooking {
   cancellationReason String?  @map("CancellationReason")
   cancelledBy        Int?     @map("CancelledBy") // ID of member/admin who cancelled
   purpose            String?  @map("Purpose")
+  foodRequired       Boolean  @default(false) @map("FoodRequired")  // Does the member want food/beverages?
+  foodDetails        String?  @map("FoodDetails")                   // What food/beverages they need
   createdDate        DateTime @default(now()) @map("CreatedDate")
   updatedDate        DateTime @updatedAt @map("UpdatedDate") // Track updates for calendar
 
@@ -225,8 +227,24 @@ model MenuItem {
   // Relationships
   cartItems          CartItem[]
   orderItems         OrderItem[]
+  ingredients        MenuItemIngredient[]
 
   @@map("MenuItem")
+}
+
+// Links a menu item to the inventory ingredients it consumes when ordered.
+// quantityPerUnit = how much of the ingredient is used per 1 unit of the menu item.
+model MenuItemIngredient {
+  id              Int       @id @default(autoincrement()) @map("RecipeID")
+  menuItemId      Int       @map("MenuItemID")
+  productId       Int       @map("ProductID")   // references Inventory.productId
+  quantityPerUnit Decimal   @db.Decimal(10, 4) @map("QuantityPerUnit")
+
+  menuItem        MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  inventory       Inventory @relation(fields: [productId], references: [productId])
+
+  @@unique([menuItemId, productId])
+  @@map("MenuItemIngredient")
 }
 
 model Modifier {
@@ -289,6 +307,7 @@ model CartItemModifier {
 
 model Order {
   id                  Int      @id @default(autoincrement()) @map("OrderID")
+  checkoutId          String?  @unique @map("CheckoutID")  // Idempotency key — prevents double-charge on network retry
   memberId            Int      @map("MemberID")
   staffId             Int?     @map("StaffID")
   restaurantTableId   Int?     @map("RestaurantTableID")
@@ -381,10 +400,14 @@ model Inventory {
   productId       Int      @id @map("ProductID")
   currentQuantity Decimal @db.Decimal(10, 2) @default(0)@map("CurrentQuantity")
   reorderLevel    Decimal @db.Decimal(10, 2)@map("ReorderLevel")
+  // STRICT = block order if stock runs out (expensive/portioned items e.g. steak, lobster)
+  // BULK   = allow negative stock, reconcile end-of-day (cheap staples e.g. rice, salt, oil)
+  trackType       String   @default("BULK") @map("TrackType")
   lastUpdated     DateTime @default(now()) @updatedAt @map("LastUpdated")
 
   // Relationships
   product         Product  @relation(fields: [productId], references: [id])
+  menuIngredients MenuItemIngredient[]
 
   @@map("Inventory")
 }

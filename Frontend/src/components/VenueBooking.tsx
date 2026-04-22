@@ -32,6 +32,8 @@ interface BookingFormData {
   eventDate: string;
   timeSlot: string;
   eventType: string;
+  foodRequired: boolean;
+  foodDetails: string;
 }
 
 export function VenueBooking({ onBack }: VenueBookingProps) {
@@ -53,7 +55,9 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
     numberOfPeople: '',
     eventDate: '',
     timeSlot: 'Evening',
-    eventType: ''
+    eventType: '',
+    foodRequired: false,
+    foodDetails: '',
   });
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -129,13 +133,44 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
       },
       numberOfPeople: guestCount,
       eventDate: selectedDate || '',
-      timeSlot: `${startTime} – ${endTime}`, // Display only
-      eventType: ''
+      timeSlot: `${startTime} – ${endTime}`,
+      eventType: '',
+      foodRequired: false,
+      foodDetails: '',
     });
     setBookingStep('form');
     setShowBookingDialog(true);
     setReceiptFile(null);
   };
+
+  // Returns a time-rule error message or null if valid
+  const getTimeRuleError = (date: string, start: string, end: string): string | null => {
+    if (!date || !start || !end) return null;
+    const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    if (toMin(start) < 18 * 60) return 'Start time must be 6:00 PM or later.';
+    if (toMin(end) > 23 * 60)   return 'End time cannot be later than 11:00 PM.';
+    if (toMin(start) >= toMin(end)) return 'End time must be after start time.';
+
+    // Reject past dates
+    const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0);
+    const eventDay = new Date(date); eventDay.setHours(0, 0, 0, 0);
+    if (eventDay < todayDate) return 'Cannot book venues for past dates.';
+
+    // Same-day bookings only allowed before 5 PM
+    if (eventDay.getTime() === todayDate.getTime() && new Date().getHours() >= 17) {
+      return 'Same-day venue bookings are not accepted after 5:00 PM.';
+    }
+
+    return null;
+  };
+
+  // True when the selected event date is today
+  const isBookingForToday = (() => {
+    if (!bookingForm.eventDate) return false;
+    const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0);
+    const eventDay = new Date(bookingForm.eventDate); eventDay.setHours(0, 0, 0, 0);
+    return eventDay.getTime() === todayDate.getTime();
+  })();
 
   const handleNext = () => {
     if (!bookingForm.numberOfPeople || !bookingForm.eventDate || !bookingForm.eventType || !startTime || !endTime) {
@@ -146,6 +181,12 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
     const reason = getRestrictionReason(bookingForm.eventDate);
     if (reason) {
       toast.error("Booking not available on this date", { description: reason });
+      return;
+    }
+
+    const timeError = getTimeRuleError(bookingForm.eventDate, startTime, endTime);
+    if (timeError) {
+      toast.error("Invalid time selection", { description: timeError });
       return;
     }
 
@@ -185,6 +226,10 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
         formData.append('endTime', endTime);
         formData.append('amount', bookingForm.venue!.price.toString());
         formData.append('paymentMethod', 'Bank Transfer');
+        formData.append('foodRequired', bookingForm.foodRequired ? 'true' : 'false');
+        if (bookingForm.foodRequired && bookingForm.foodDetails.trim()) {
+          formData.append('foodDetails', bookingForm.foodDetails.trim());
+        }
         if (receiptFile) formData.append('receipt', receiptFile);
   
         await venueAPI.createBooking(formData);
@@ -199,7 +244,9 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
         numberOfPeople: '',
         eventDate: '',
         timeSlot: 'Evening',
-        eventType: ''
+        eventType: '',
+        foodRequired: false,
+        foodDetails: '',
       });
       setReceiptFile(null);
     } catch (error: any) {
@@ -609,7 +656,18 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                   value={bookingForm.eventDate}
                   min={today}
                   className={getRestrictionReason(bookingForm.eventDate) ? 'border-destructive ring-1 ring-destructive/40' : ''}
-                  onChange={(e) => setBookingForm({ ...bookingForm, eventDate: e.target.value })}
+                  onChange={(e) => {
+                    const newDate = e.target.value;
+                    const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0);
+                    const eventDay = new Date(newDate); eventDay.setHours(0, 0, 0, 0);
+                    const isNowToday = eventDay.getTime() === todayDate.getTime();
+                    setBookingForm({
+                      ...bookingForm,
+                      eventDate: newDate,
+                      // Clear food fields if switching to today — pre-order not allowed
+                      ...(isNowToday ? { foodRequired: false, foodDetails: '' } : {})
+                    });
+                  }}
                 />
                 {getRestrictionReason(bookingForm.eventDate) && (
                   <div className="flex items-start gap-2 rounded-lg bg-destructive/8 border border-destructive/25 px-3 py-2">
@@ -627,11 +685,13 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
               </div>
 
               <div className="space-y-2">
-                <Label>Time Slot</Label>
+                <Label>Time Slot <span className="text-xs text-muted-foreground font-normal">(6:00 PM – 11:00 PM only)</span></Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="time"
                     value={startTime}
+                    min="18:00"
+                    max="23:00"
                     onChange={(e) => setStartTime(e.target.value)}
                     className="flex-1"
                     required
@@ -640,11 +700,22 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                   <Input
                     type="time"
                     value={endTime}
+                    min="18:00"
+                    max="23:00"
                     onChange={(e) => setEndTime(e.target.value)}
                     className="flex-1"
                     required
                   />
                 </div>
+                {(startTime || endTime) && (() => {
+                  const err = getTimeRuleError(bookingForm.eventDate, startTime, endTime);
+                  return err ? (
+                    <div className="flex items-center gap-1.5 text-xs text-destructive">
+                      <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                      {err}
+                    </div>
+                  ) : null;
+                })()}
               </div>
 
               <div className="space-y-2">
@@ -663,6 +734,75 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* ── Food & Beverages Question ── */}
+              {isBookingForToday ? (
+                // Same-day booking — food pre-order not available
+                <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800">Food pre-order not available for today</p>
+                    <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                      Same-day bookings cannot include advance food orders. Once your booking is confirmed, please place your food order separately through the restaurant.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                // Future date — food pre-order available
+                <div className="space-y-3 rounded-lg border border-secondary/30 bg-secondary/5 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Food & Beverages</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Would you like to pre-order food or beverages for your event?
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setBookingForm({ ...bookingForm, foodRequired: true })}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                          bookingForm.foodRequired
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBookingForm({ ...bookingForm, foodRequired: false, foodDetails: '' })}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                          !bookingForm.foodRequired
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+
+                  {bookingForm.foodRequired && (
+                    <div className="space-y-1.5 pt-1">
+                      <Label htmlFor="foodDetails" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        What food or beverages do you need?
+                      </Label>
+                      <textarea
+                        id="foodDetails"
+                        rows={3}
+                        placeholder="e.g. Buffet for 50 people, soft drinks, 2 bottles of wine..."
+                        value={bookingForm.foodDetails}
+                        onChange={(e) => setBookingForm({ ...bookingForm, foodDetails: e.target.value })}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Our team will contact you to confirm the menu and pricing.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 pt-4">
                 <Button variant="outline" onClick={() => setShowBookingDialog(false)}>
@@ -698,6 +838,14 @@ export function VenueBooking({ onBack }: VenueBookingProps) {
                     <span className="text-muted-foreground">Number of People:</span>
                     <span className="text-foreground">{bookingForm.numberOfPeople}</span>
                   </div>
+                  {bookingForm.foodRequired && (
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">Food & Beverages:</span>
+                      <span className="text-foreground text-right max-w-[60%]">
+                        {bookingForm.foodDetails || 'Yes (details to be confirmed)'}
+                      </span>
+                    </div>
+                  )}
                   <Separator className="my-2" />
                   <div className="flex justify-between items-center">
                     <span className="text-foreground">Venue Price:</span>

@@ -11,3 +11,11 @@
 
 # Security and Passwords (ADD THIS)
 .env
+
+# Production environment files
+.env.production
+.env.local
+.env.*.local
+
+# Azure temp files
+/tmp/azure-compose.yml
