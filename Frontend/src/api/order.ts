@@ -10,6 +10,15 @@ export interface OrderItem {
     menuItem?: MenuItem;
 }
 
+export interface OrderPayment {
+    id: number;
+    amount: number;
+    paymentMethod: string;
+    paymentStatus: string;  // 'Completed' = Paid, 'Pending' = Unpaid
+    receiptUrl: string | null;
+    paymentDate: string;
+}
+
 export interface Order {
     id: number;
     memberId: number;
@@ -23,6 +32,7 @@ export interface Order {
     serviceFee?: number;
     totalAmount: number;
     orderItems?: OrderItem[];
+    payments?: OrderPayment[];  // latest payment record — used for payment status display
 }
 
 export const orderAPI = {
@@ -44,5 +54,13 @@ export const orderAPI = {
     updateStatus: async (id: number, status: string): Promise<Order> => {
         const response = await api.put(`orders/${id}/status`, { status });
         return response.data;
+    },
+
+    /**
+     * Update the payment status of an order (admin/staff only).
+     * paymentStatus: 'Paid' | 'Unpaid'
+     */
+    updatePaymentStatus: async (id: number, paymentStatus: 'Paid' | 'Unpaid'): Promise<void> => {
+        await api.put(`orders/${id}/payment-status`, { paymentStatus });
     }
 };

@@ -1,38 +1,56 @@
 const { PrismaClient } = require('@prisma/client')
 
-// Switch to the test database when running in test mode
+/**
+ * Use the test database URL when running in test mode so tests never
+ * touch production data. Falls back to the standard DATABASE_URL.
+ */
 const datasourceUrl =
-  process.env.NODE_ENV === 'test'
-    ? process.env.TEST_DATABASE_URL
-    : process.env.DATABASE_URL
+    process.env.NODE_ENV === 'test'
+        ? process.env.TEST_DATABASE_URL
+        : process.env.DATABASE_URL
 
-const prismaClient = new PrismaClient({
-  datasourceUrl,
-})
+const prismaClient = new PrismaClient({ datasourceUrl })
 
+/**
+ * Extended Prisma client with automatic audit logging.
+ *
+ * Every mutating operation (create, update, delete, upsert, *Many) is
+ * intercepted and an AuditLog record is written asynchronously.
+ *
+ * Design decisions:
+ * - Fire-and-forget: audit writes never block the main operation
+ * - AuditLog writes are skipped to prevent infinite recursion
+ * - changedBy is null because AsyncLocalStorage is not set up; it can be
+ *   wired in later if per-user audit trails are required
+ */
 const prisma = prismaClient.$extends({
     query: {
         $allModels: {
             async $allOperations({ model, operation, args, query }) {
+                // Execute the actual database operation first
                 const result = await query(args)
 
-                // Log mutations
-                if (['create', 'update', 'delete', 'upsert', 'createMany', 'updateMany', 'deleteMany'].includes(operation)) {
-                    // Asynchronous logging to avoid blocking main flow (fire & forget style for speed, 
-                    // but could await if strict audit is required. For user experience, we'll fire & forget but log errors)
-                    (async () => {
+                const MUTATIONS = ['create', 'update', 'delete', 'upsert', 'createMany', 'updateMany', 'deleteMany']
+
+                if (MUTATIONS.includes(operation)) {
+                    // Write audit log asynchronously — errors are logged but never thrown
+                    ;(async () => {
                         try {
-                            if (model === 'AuditLog') return; // Prevent recursion
+                            // Skip AuditLog writes to avoid infinite recursion
+                            if (model === 'AuditLog') return
 
                             await prismaClient.auditLog.create({
                                 data: {
                                     tableName: model,
                                     action: operation.toUpperCase(),
-                                    recordId: result && result.id ? result.id : (args.where && args.where.id ? args.where.id : 0),
-                                    oldValue: operation.includes('update') || operation.includes('delete') ? JSON.stringify(args) : null,
+                                    // Use result.id if available, otherwise fall back to the where clause id
+                                    recordId: result?.id ?? args.where?.id ?? 0,
+                                    // Capture the before-state for updates and deletes
+                                    oldValue: (operation.includes('update') || operation.includes('delete'))
+                                        ? JSON.stringify(args)
+                                        : null,
                                     newValue: JSON.stringify(args.data || args),
-                                    changedBy: null // Cannot easily get User ID here without AsyncLocalStorage
-                                    // changedDate is auto-populated via @default(now()) in the schema
+                                    changedBy: null  // TODO: wire in via AsyncLocalStorage for per-user tracking
                                 }
                             })
                         } catch (err) {
@@ -40,6 +58,7 @@ const prisma = prismaClient.$extends({
                         }
                     })()
                 }
+
                 return result
             }
         }

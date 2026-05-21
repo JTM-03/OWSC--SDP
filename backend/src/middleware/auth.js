@@ -2,6 +2,14 @@ const jwt = require('jsonwebtoken')
 const prisma = require('../lib/prisma')
 const { UnauthorizedError, ForbiddenError } = require('../utils/errors')
 
+/**
+ * Authenticate a request by verifying the JWT.
+ * Reads the token from the HttpOnly cookie first, then falls back to the
+ * Authorization: Bearer header for API clients that can't use cookies.
+ * Attaches the full user record to req.user on success.
+ * Blocks Suspended and Inactive accounts; Pending members are allowed through
+ * so they can view their profile while awaiting membership approval.
+ */
 async function authenticate(req, res, next) {
     try {
         // Read token from HttpOnly cookie first, fall back to Authorization header
@@ -54,6 +62,12 @@ async function authenticate(req, res, next) {
     }
 }
 
+/**
+ * Role-based access control middleware factory.
+ * Returns a middleware that allows only users with one of the specified roles.
+ * Must be used after authenticate() so req.user is populated.
+ * @param {...string} allowedRoles - Roles permitted to access the route
+ */
 function requireRole(...allowedRoles) {
     return (req, res, next) => {
         if (!req.user) {
@@ -68,7 +82,11 @@ function requireRole(...allowedRoles) {
     }
 }
 
-// Optional authentication - doesn't fail if no token
+/**
+ * Optional authentication — attaches req.user if a valid token is present,
+ * but does not fail the request if no token is provided or the token is invalid.
+ * Useful for routes that serve different content to authenticated vs. anonymous users.
+ */
 async function optionalAuth(req, res, next) {
     try {
         const token = req.cookies?.token

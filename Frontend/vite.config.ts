@@ -62,6 +62,11 @@
     server: {
       port: 3000,
       open: true,
+      hmr: {
+        // Use a dedicated port for HMR WebSocket so it never conflicts
+        // with the app's own Socket.io connection to the backend
+        port: 3001,
+      },
       proxy: {
         // Forward every /api request to the backend — no CORS in the browser
         '/api': {
