@@ -87,11 +87,24 @@ app.use("/api/deliveries",    require("./routes/deliveries"))
 app.use("/api/notifications", require("./routes/notifications"))
 app.use("/api/tables",        require("./routes/tables"))
 
-// ─── 404 Fallback ─────────────────────────────────────────────────────────────
-// Catches any request that didn't match a registered route
-app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' })
-})
+// ─── Serve Frontend (Production Only) ─────────────────────────────────────────
+// When deployed as a single container (Azure App Service), serve the React app
+if (process.env.NODE_ENV === 'production') {
+    const frontendPath = path.join(__dirname, '../public/frontend')
+    
+    // Serve static files from the built frontend
+    app.use(express.static(frontendPath))
+    
+    // SPA fallback: serve index.html for all unmatched routes (React Router)
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(frontendPath, 'index.html'))
+    })
+} else {
+    // Development mode: API-only, frontend runs separately on Vite dev server
+    app.use((req, res) => {
+        res.status(404).json({ error: 'Route not found' })
+    })
+}
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
 // Must be registered last — Express identifies error handlers by their 4-argument signature

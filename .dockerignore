@@ -1,0 +1,45 @@
+# Dependencies (rebuilt inside container)
+**/node_modules
+**/.npm
+
+# Build artifacts
+Frontend/build
+Frontend/dist
+
+# Dev/test files
+**/__tests__
+**/*.test.js
+**/*.spec.js
+backend/jest.config.js
+
+# Local environment files (use Azure App Settings instead)
+**/.env
+**/.env.local
+**/.env.development
+.env.production
+
+# Database files (use Azure PostgreSQL instead)
+backend/prisma/dev.db
+backend/prisma/*.db
+
+# Logs
+**/logs
+**/*.log
+
+# Scripts (not needed at runtime)
+backend/scripts/
+scripts/
+docs/
+
+# Git
+.git
+.gitignore
+
+# Editor config
+.vscode
+.editorconfig
+.prettierrc
+
+# OS files
+.DS_Store
+Thumbs.db
